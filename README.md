@@ -2,8 +2,8 @@
 
 ## Membros
 - Camila de Almeida Ribeiro (backend)
-- [adicionem vocês mesmos (de preferência em ordem alfabética)]
--
+- 
+- Pedro Lucas Garcia Calais (backend)
 -
 
 ## Objetivo do Sistema

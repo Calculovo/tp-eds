@@ -2,7 +2,7 @@
 
 ## Membros
 - Camila de Almeida Ribeiro (backend)
-- 
+- Emerson Araújo Simões (full)
 - Pedro Lucas Garcia Calais (backend)
 -
 

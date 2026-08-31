@@ -2,7 +2,7 @@
 
 ## Membros
 - Camila de Almeida Ribeiro (backend)
-- 
+- Gabriel Wilson Dos Santos Da Silva (frontend)
 - Pedro Lucas Garcia Calais (backend)
 -
 

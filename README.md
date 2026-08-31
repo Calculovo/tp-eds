@@ -3,8 +3,8 @@
 ## Membros
 - Camila de Almeida Ribeiro (backend)
 - Emerson Araújo Simões (full)
+- Gabriel Wilson Dos Santos Da Silva (frontend)
 - Pedro Lucas Garcia Calais (backend)
--
 
 ## Objetivo do Sistema
 O sistema é um fórum de reviews de restaurantes. Usuários podem buscar restaurantes baseado em seu placar médio, comentar sobre os restaurantes listados, ler as reviews deixadas por outros usuários, e avaliar de reviews são úteis ou não.

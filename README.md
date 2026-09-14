@@ -7,21 +7,26 @@
 - Pedro Lucas Garcia Calais (backend)
 
 ## Objetivo do Sistema
-O sistema é um fórum de reviews de restaurantes. Usuários podem buscar restaurantes baseado em seu placar médio, comentar sobre os restaurantes listados, ler as reviews deixadas por outros usuários, e avaliar de reviews são úteis ou não.
+O sistema (restaurank) é um fórum de reviews de restaurantes. Usuários podem buscar restaurantes baseado em seu placar médio, comentar sobre os restaurantes listados, ler as reviews deixadas por outros usuários, e avaliar de reviews são úteis ou não.
 
 ## Tecnologias
 
 ### Linguagem
-A ser determinado.
+TypeScript
+​Python
 
 ### Frameworks
-A ser determinado.
+React
+Django
+FastAPI
 
 ### Banco de Dados
-A ser determinado.
+PostgreSQL
 
 ### Agentes de IA
-A ser determinado.
+Cursor 
+GitHub Copilot
+Gemini Pro chat e Notebooks
 
 ## Histórias de Usuário
 1. Como usuário, quero criar uma conta;

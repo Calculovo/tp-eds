@@ -41,3 +41,30 @@ def search_restaurants(name: str = Query(default="", max_length=255)) -> list[di
                 }
                 for row in cur.fetchall()
             ]
+
+
+@app.get("/restaurants/{restaurant_id}/reviews")
+def list_restaurant_reviews(restaurant_id: int) -> list[dict]:
+    with connect() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                SELECT rv.id, u.email, rv.rating, rv.comment
+                FROM reviews AS rv
+                JOIN users AS u ON u.id = rv.user_id
+                WHERE rv.restaurant_id = %s
+                  AND rv.comment IS NOT NULL
+                  AND BTRIM(rv.comment) <> ''
+                ORDER BY rv.id DESC
+                """,
+                (restaurant_id,),
+            )
+            return [
+                {
+                    "id": row[0],
+                    "email": row[1],
+                    "rating": float(row[2]),
+                    "comment": row[3],
+                }
+                for row in cur.fetchall()
+            ]

@@ -2,17 +2,18 @@ import { useEffect, useState, type FormEvent } from 'react'
 
 type ListaRestaurantesProps = {
   email: string
-  onSelecionarRestaurante: (nome: string) => void
+  onSelecionarRestaurante: (restaurante: Restaurante) => void
   onLogout: () => void
 }
 
-type Restaurante = {
+export type Restaurante = {
   id: number
   nome: string
   categoria: string
   imagem: string | null
   mediaAvaliacoes: number | null
   quantidadeAvaliacoes: number
+  contagemAvaliacoes: number[]
 }
 
 async function carregarRestaurantes(nome: string): Promise<Restaurante[]> {
@@ -30,6 +31,7 @@ async function carregarRestaurantes(nome: string): Promise<Restaurante[]> {
     image_url: string | null
     average_rating: number | null
     review_count: number
+    rating_counts: number[]
   }[]
   return resultados.map((restaurante) => ({
     id: restaurante.id,
@@ -38,6 +40,7 @@ async function carregarRestaurantes(nome: string): Promise<Restaurante[]> {
     imagem: restaurante.image_url,
     mediaAvaliacoes: restaurante.average_rating,
     quantidadeAvaliacoes: restaurante.review_count,
+    contagemAvaliacoes: restaurante.rating_counts,
   }))
 }
 
@@ -129,7 +132,7 @@ function ListaRestaurantes({
           <button
             key={restaurante.id}
             type="button"
-            onClick={() => onSelecionarRestaurante(restaurante.nome)}
+            onClick={() => onSelecionarRestaurante(restaurante)}
             className="rounded-lg border border-zinc-200 bg-white p-4 text-left shadow-md transition hover:border-emerald-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700"
           >
             {restaurante.imagem && (

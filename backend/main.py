@@ -13,7 +13,12 @@ def search_restaurants(name: str = Query(default="", max_length=255)) -> list[di
                 """
                 SELECT r.id, r.name, r.category, r.image_url,
                        AVG(rv.rating) AS average_rating,
-                       COUNT(rv.id) AS review_count
+                      COUNT(rv.id) AS review_count,
+                      COUNT(rv.id) FILTER (WHERE ROUND(rv.rating) = 1),
+                      COUNT(rv.id) FILTER (WHERE ROUND(rv.rating) = 2),
+                      COUNT(rv.id) FILTER (WHERE ROUND(rv.rating) = 3),
+                      COUNT(rv.id) FILTER (WHERE ROUND(rv.rating) = 4),
+                      COUNT(rv.id) FILTER (WHERE ROUND(rv.rating) = 5)
                 FROM restaurants AS r
                 LEFT JOIN reviews AS rv ON rv.restaurant_id = r.id
                 WHERE %s = '' OR r.name ILIKE %s
@@ -32,6 +37,7 @@ def search_restaurants(name: str = Query(default="", max_length=255)) -> list[di
                         float(row[4]) if row[4] is not None else None
                     ),
                     "review_count": row[5],
+                    "rating_counts": list(row[6:11]),
                 }
                 for row in cur.fetchall()
             ]

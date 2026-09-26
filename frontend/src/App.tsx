@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import Cadastro from './components/Cadastro'
 import ListaRestaurantes, {
   type Restaurante,
@@ -8,11 +8,43 @@ import Login from './components/Login'
 // As 3 telas possíveis do app nesta simulação.
 type Tela = 'login' | 'cadastro' | 'logado'
 
+type AvaliacaoRestaurante = {
+  id: number
+  email: string
+  rating: number
+  comment: string
+}
+
 function App() {
   const [tela, setTela] = useState<Tela>('login')
   const [emailLogado, setEmailLogado] = useState('')
   const [restauranteSelecionado, setRestauranteSelecionado] =
     useState<Restaurante | null>(null)
+  const [, setAvaliacoes] = useState<AvaliacaoRestaurante[]>([])
+
+  useEffect(() => {
+    const restauranteId = restauranteSelecionado?.id
+    if (restauranteId === undefined) return
+
+    let ativa = true
+    fetch(`/api/restaurants/${restauranteId}/reviews`)
+      .then((resposta) => {
+        if (!resposta.ok) {
+          throw new Error('Não foi possível carregar as avaliações.')
+        }
+        return resposta.json() as Promise<AvaliacaoRestaurante[]>
+      })
+      .then((resultados) => {
+        if (ativa) setAvaliacoes(resultados)
+      })
+      .catch(() => {
+        if (ativa) setAvaliacoes([])
+      })
+
+    return () => {
+      ativa = false
+    }
+  }, [restauranteSelecionado?.id])
 
   if (tela === 'cadastro') {
     return <Cadastro onIrParaLogin={() => setTela('login')} />

@@ -6,17 +6,17 @@ app = FastAPI()
 
 
 @app.get("/restaurants")
-def search_restaurants(name: str = Query(min_length=1, max_length=255)) -> list[dict]:
+def search_restaurants(name: str = Query(default="", max_length=255)) -> list[dict]:
     with connect() as conn:
         with conn.cursor() as cur:
             cur.execute(
                 """
                 SELECT id, name, category, image_url
                 FROM restaurants
-                WHERE name ILIKE %s
+                WHERE %s = '' OR name ILIKE %s
                 ORDER BY name
                 """,
-                (f"%{name}%",),
+                (name, f"%{name}%"),
             )
             return [
                 {

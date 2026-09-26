@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react'
+import { useEffect, useState, type FormEvent } from 'react'
 
 type ListaRestaurantesProps = {
   email: string
@@ -12,55 +12,62 @@ type Restaurante = {
   imagem: string | null
 }
 
+async function carregarRestaurantes(nome: string): Promise<Restaurante[]> {
+  const resposta = await fetch(
+    `/api/restaurants?name=${encodeURIComponent(nome)}`,
+  )
+  if (!resposta.ok) {
+    throw new Error('Não foi possível buscar restaurantes.')
+  }
+
+  const resultados = (await resposta.json()) as {
+    id: number
+    name: string
+    category: string
+    image_url: string | null
+  }[]
+  return resultados.map((restaurante) => ({
+    id: restaurante.id,
+    nome: restaurante.name,
+    categoria: restaurante.category,
+    imagem: restaurante.image_url,
+  }))
+}
+
 function ListaRestaurantes({ email, onLogout }: ListaRestaurantesProps) {
   const [nomeBusca, setNomeBusca] = useState('')
+  const [consulta, setConsulta] = useState('')
   const [restaurantes, setRestaurantes] = useState<Restaurante[]>([])
-  const [carregando, setCarregando] = useState(false)
+  const [carregando, setCarregando] = useState(true)
   const [erro, setErro] = useState('')
-  const [buscou, setBuscou] = useState(false)
+
+  useEffect(() => {
+    let ativa = true
+    setCarregando(true)
+    setErro('')
+
+    carregarRestaurantes(consulta)
+      .then((resultados) => {
+        if (ativa) setRestaurantes(resultados)
+      })
+      .catch(() => {
+        if (ativa) {
+          setRestaurantes([])
+          setErro('Não foi possível buscar restaurantes. Tente novamente.')
+        }
+      })
+      .finally(() => {
+        if (ativa) setCarregando(false)
+      })
+
+    return () => {
+      ativa = false
+    }
+  }, [consulta])
 
   async function buscarRestaurantes(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    const nome = nomeBusca.trim()
-    if (!nome) {
-      setRestaurantes([])
-      setErro('Digite o nome de um restaurante para buscar.')
-      setBuscou(false)
-      return
-    }
-
-    setCarregando(true)
-    setErro('')
-    setBuscou(true)
-
-    try {
-      const resposta = await fetch(
-        `/api/restaurants?name=${encodeURIComponent(nome)}`,
-      )
-      if (!resposta.ok) {
-        throw new Error('Não foi possível buscar restaurantes.')
-      }
-
-      const resultados = (await resposta.json()) as {
-        id: number
-        name: string
-        category: string
-        image_url: string | null
-      }[]
-      setRestaurantes(
-        resultados.map((restaurante) => ({
-          id: restaurante.id,
-          nome: restaurante.name,
-          categoria: restaurante.category,
-          imagem: restaurante.image_url,
-        })),
-      )
-    } catch {
-      setRestaurantes([])
-      setErro('Não foi possível buscar restaurantes. Tente novamente.')
-    } finally {
-      setCarregando(false)
-    }
+    setConsulta(nomeBusca.trim())
   }
 
   return (
@@ -83,7 +90,11 @@ function ListaRestaurantes({ email, onLogout }: ListaRestaurantesProps) {
         <input
           type="search"
           value={nomeBusca}
-          onChange={(event) => setNomeBusca(event.target.value)}
+          onChange={(event) => {
+            const valor = event.target.value
+            setNomeBusca(valor)
+            if (!valor.trim()) setConsulta('')
+          }}
           placeholder="Buscar restaurante por nome"
           aria-label="Nome do restaurante"
           className="min-w-0 flex-1 rounded border border-zinc-300 bg-white px-3 py-2"
@@ -98,7 +109,7 @@ function ListaRestaurantes({ email, onLogout }: ListaRestaurantesProps) {
       </form>
 
       {erro && <p role="alert" className="mb-4 text-sm text-red-700">{erro}</p>}
-      {!erro && buscou && !carregando && restaurantes.length === 0 && (
+      {!erro && !carregando && restaurantes.length === 0 && (
         <p className="mb-4 text-sm text-zinc-600">Nenhum restaurante encontrado.</p>
       )}
 

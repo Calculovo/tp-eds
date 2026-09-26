@@ -4,3 +4,16 @@ CREATE TABLE restaurants (
     category VARCHAR(100) NOT NULL,
     image_url TEXT
 );
+
+CREATE TABLE users (
+    id SERIAL PRIMARY KEY,
+    email VARCHAR(255) NOT NULL UNIQUE
+);
+
+CREATE TABLE reviews (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL REFERENCES users(id),
+    restaurant_id INTEGER NOT NULL REFERENCES restaurants(id),
+    rating NUMERIC(2, 1) NOT NULL CHECK (rating >= 1 AND rating <= 5),
+    comment TEXT
+);

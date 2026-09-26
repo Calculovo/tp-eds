@@ -10,6 +10,8 @@ type Restaurante = {
   nome: string
   categoria: string
   imagem: string | null
+  mediaAvaliacoes: number | null
+  quantidadeAvaliacoes: number
 }
 
 async function carregarRestaurantes(nome: string): Promise<Restaurante[]> {
@@ -25,12 +27,16 @@ async function carregarRestaurantes(nome: string): Promise<Restaurante[]> {
     name: string
     category: string
     image_url: string | null
+    average_rating: number | null
+    review_count: number
   }[]
   return resultados.map((restaurante) => ({
     id: restaurante.id,
     nome: restaurante.name,
     categoria: restaurante.category,
     imagem: restaurante.image_url,
+    mediaAvaliacoes: restaurante.average_rating,
+    quantidadeAvaliacoes: restaurante.review_count,
   }))
 }
 
@@ -130,6 +136,11 @@ function ListaRestaurantes({ email, onLogout }: ListaRestaurantesProps) {
               {restaurante.nome}
             </h2>
             <p className="text-sm text-zinc-500">{restaurante.categoria}</p>
+            <p className="mt-3 font-bold text-amber-600">
+              {restaurante.mediaAvaliacoes === null
+                ? 'Sem avaliações'
+                : `★ ${restaurante.mediaAvaliacoes.toFixed(1)} / 5 (${restaurante.quantidadeAvaliacoes} ${restaurante.quantidadeAvaliacoes === 1 ? 'avaliação' : 'avaliações'})`}
+            </p>
           </article>
         ))}
       </div>

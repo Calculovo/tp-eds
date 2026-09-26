@@ -11,10 +11,14 @@ def search_restaurants(name: str = Query(default="", max_length=255)) -> list[di
         with conn.cursor() as cur:
             cur.execute(
                 """
-                SELECT id, name, category, image_url
-                FROM restaurants
-                WHERE %s = '' OR name ILIKE %s
-                ORDER BY name
+                SELECT r.id, r.name, r.category, r.image_url,
+                       AVG(rv.rating) AS average_rating,
+                       COUNT(rv.id) AS review_count
+                FROM restaurants AS r
+                LEFT JOIN reviews AS rv ON rv.restaurant_id = r.id
+                WHERE %s = '' OR r.name ILIKE %s
+                GROUP BY r.id
+                ORDER BY r.name
                 """,
                 (name, f"%{name}%"),
             )
@@ -24,6 +28,10 @@ def search_restaurants(name: str = Query(default="", max_length=255)) -> list[di
                     "name": row[1],
                     "category": row[2],
                     "image_url": row[3],
+                    "average_rating": (
+                        float(row[4]) if row[4] is not None else None
+                    ),
+                    "review_count": row[5],
                 }
                 for row in cur.fetchall()
             ]

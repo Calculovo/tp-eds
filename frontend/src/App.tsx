@@ -20,13 +20,21 @@ function App() {
   const [emailLogado, setEmailLogado] = useState('')
   const [restauranteSelecionado, setRestauranteSelecionado] =
     useState<Restaurante | null>(null)
-  const [, setAvaliacoes] = useState<AvaliacaoRestaurante[]>([])
+  const [avaliacoes, setAvaliacoes] = useState<AvaliacaoRestaurante[]>([])
+  const [carregandoAvaliacoes, setCarregandoAvaliacoes] = useState(false)
+  const [erroAvaliacoes, setErroAvaliacoes] = useState('')
 
   useEffect(() => {
     const restauranteId = restauranteSelecionado?.id
-    if (restauranteId === undefined) return
+    if (restauranteId === undefined) {
+      setAvaliacoes([])
+      setCarregandoAvaliacoes(false)
+      return
+    }
 
     let ativa = true
+    setCarregandoAvaliacoes(true)
+    setErroAvaliacoes('')
     fetch(`/api/restaurants/${restauranteId}/reviews`)
       .then((resposta) => {
         if (!resposta.ok) {
@@ -38,7 +46,13 @@ function App() {
         if (ativa) setAvaliacoes(resultados)
       })
       .catch(() => {
-        if (ativa) setAvaliacoes([])
+        if (ativa) {
+          setAvaliacoes([])
+          setErroAvaliacoes('Não foi possível carregar os comentários.')
+        }
+      })
+      .finally(() => {
+        if (ativa) setCarregandoAvaliacoes(false)
       })
 
     return () => {
@@ -65,18 +79,18 @@ function App() {
           />
         </div>
         {restauranteSelecionado !== null && (
-          <main className="min-h-screen bg-zinc-100 p-8">
+          <main className="min-h-screen bg-zinc-100 p-8 lg:grid lg:grid-cols-[minmax(0,2fr)_minmax(18rem,1fr)] lg:content-start lg:gap-x-8">
             <button
               type="button"
               onClick={() => setRestauranteSelecionado(null)}
-              className="mb-8 rounded px-3 py-2 text-sm font-medium text-emerald-800 hover:bg-emerald-50"
+              className="mb-8 rounded px-3 py-2 text-sm font-medium text-emerald-800 hover:bg-emerald-50 lg:col-span-2"
             >
               Voltar aos resultados
             </button>
-            <h1 className="text-3xl font-bold text-zinc-900">
+            <h1 className="text-3xl font-bold text-zinc-900 lg:col-span-2">
               {restauranteSelecionado.nome}
             </h1>
-            <div className="mt-8 max-w-2xl">
+            <div className="mt-8 max-w-2xl lg:contents">
               <div className="aspect-[16/9] overflow-hidden rounded border border-zinc-200 bg-white">
                 {restauranteSelecionado.imagem ? (
                   <img
@@ -92,7 +106,7 @@ function App() {
               </div>
               <section
                 aria-labelledby="distribuicao-titulo"
-                className="mt-6 max-w-lg"
+                className="mt-6 max-w-lg lg:col-start-1 lg:row-start-4"
               >
                 <h2
                   id="distribuicao-titulo"
@@ -150,6 +164,30 @@ function App() {
                 )}
               </section>
             </div>
+            <section
+              aria-labelledby="comentarios-titulo"
+              className="mt-8 min-w-0 lg:col-start-2 lg:row-start-3"
+            >
+              <h2 id="comentarios-titulo" className="text-xl font-semibold text-zinc-900">
+                Comentários
+              </h2>
+              <div className="mt-4 max-h-[65vh] overflow-y-auto pr-2">
+                {carregandoAvaliacoes && <p className="text-sm text-zinc-600">Carregando...</p>}
+                {erroAvaliacoes && <p role="alert" className="text-sm text-red-700">{erroAvaliacoes}</p>}
+                {!carregandoAvaliacoes && !erroAvaliacoes && avaliacoes.length === 0 && (
+                  <p className="text-sm text-zinc-600">Ainda não há comentários.</p>
+                )}
+                {avaliacoes.map((avaliacao) => (
+                  <article key={avaliacao.id} className="border-b border-zinc-200 py-4 first:pt-0">
+                    <div className="flex items-start justify-between gap-3">
+                      <p className="break-all text-sm font-medium text-zinc-800">{avaliacao.email}</p>
+                      <p className="shrink-0 text-sm font-semibold text-amber-600">★ {avaliacao.rating.toFixed(1)}</p>
+                    </div>
+                    <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-zinc-700">{avaliacao.comment}</p>
+                  </article>
+                ))}
+              </div>
+            </section>
           </main>
         )}
       </>

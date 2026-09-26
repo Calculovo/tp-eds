@@ -2,6 +2,7 @@ import { useEffect, useState, type FormEvent } from 'react'
 
 type ListaRestaurantesProps = {
   email: string
+  onSelecionarRestaurante: (nome: string) => void
   onLogout: () => void
 }
 
@@ -40,7 +41,11 @@ async function carregarRestaurantes(nome: string): Promise<Restaurante[]> {
   }))
 }
 
-function ListaRestaurantes({ email, onLogout }: ListaRestaurantesProps) {
+function ListaRestaurantes({
+  email,
+  onSelecionarRestaurante,
+  onLogout,
+}: ListaRestaurantesProps) {
   const [nomeBusca, setNomeBusca] = useState('')
   const [consulta, setConsulta] = useState('')
   const [restaurantes, setRestaurantes] = useState<Restaurante[]>([])
@@ -121,9 +126,11 @@ function ListaRestaurantes({ email, onLogout }: ListaRestaurantesProps) {
 
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
         {restaurantes.map((restaurante) => (
-          <article
+          <button
             key={restaurante.id}
-            className="rounded-lg border border-zinc-200 bg-white p-4 shadow-md"
+            type="button"
+            onClick={() => onSelecionarRestaurante(restaurante.nome)}
+            className="rounded-lg border border-zinc-200 bg-white p-4 text-left shadow-md transition hover:border-emerald-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700"
           >
             {restaurante.imagem && (
               <img
@@ -141,7 +148,7 @@ function ListaRestaurantes({ email, onLogout }: ListaRestaurantesProps) {
                 ? 'Sem avaliações'
                 : `★ ${restaurante.mediaAvaliacoes.toFixed(1)} / 5 (${restaurante.quantidadeAvaliacoes} ${restaurante.quantidadeAvaliacoes === 1 ? 'avaliação' : 'avaliações'})`}
             </p>
-          </article>
+          </button>
         ))}
       </div>
     </main>

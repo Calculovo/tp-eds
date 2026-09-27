@@ -3,9 +3,10 @@ import { cadastrarUsuario } from '../usuarios'
 
 type CadastroProps = {
   onIrParaLogin: () => void
+  onCadastroSucesso: (nome: string) => void // Adicionado
 }
 
-function Cadastro({ onIrParaLogin }: CadastroProps) {
+function Cadastro({ onIrParaLogin, onCadastroSucesso }: CadastroProps) {
   const [nome, setNome] = useState('')
   const [sobrenome, setSobrenome] = useState('')
   const [email, setEmail] = useState('')
@@ -15,13 +16,13 @@ function Cadastro({ onIrParaLogin }: CadastroProps) {
   function cadastrar(evento: FormEvent) {
     evento.preventDefault()
 
-    // Opcional: você pode passar o nome completo se a função aceitar, ou apenas validar os dados
     const mensagemErro = cadastrarUsuario(email, senha)
     if (mensagemErro) {
       setErro(mensagemErro)
       return
     }
-
+    
+    onCadastroSucesso(nome)
     onIrParaLogin()
   }
 

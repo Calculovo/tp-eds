@@ -51,6 +51,18 @@ SAMPLE_REVIEWS = [
     ),
 ]
 
+SAMPLE_FOLLOWS = [
+    ("ana@example.com", "bruno@example.com"),
+    ("ana@example.com", "carla@example.com"),
+    ("bruno@example.com", "ana@example.com"),
+    ("carla@example.com", "diego@example.com"),
+    ("diego@example.com", "ana@example.com"),
+    ("diego@example.com", "elisa@example.com"),
+    ("elisa@example.com", "ana@example.com"),
+    ("elisa@example.com", "bruno@example.com"),
+    ("elisa@example.com", "carla@example.com"),
+]
+
 
 def seed_reviews(cur) -> None:
     for email, restaurant_name, rating, comment in SAMPLE_REVIEWS:
@@ -88,6 +100,24 @@ def seed_reviews(cur) -> None:
             )
 
 
+def seed_follows(cur) -> None:
+    for follower_email, followed_email in SAMPLE_FOLLOWS:
+        cur.execute("SELECT id FROM users WHERE email = %s", (follower_email,))
+        follower = cur.fetchone()
+        cur.execute("SELECT id FROM users WHERE email = %s", (followed_email,))
+        followed = cur.fetchone()
+        if follower is None or followed is None:
+            continue
+        cur.execute(
+            """
+            INSERT INTO follows (follower_id, followed_id)
+            VALUES (%s, %s)
+            ON CONFLICT DO NOTHING
+            """,
+            (follower[0], followed[0]),
+        )
+
+
 def seed() -> None:
     with connect() as conn:
         ensure_schema(conn)
@@ -99,6 +129,7 @@ def seed() -> None:
                     RESTAURANTS,
                 )
             seed_reviews(cur)
+            seed_follows(cur)
             cur.execute(
                 """
                 SELECT r.name, AVG(rv.rating), COUNT(rv.id)

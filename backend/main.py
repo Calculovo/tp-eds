@@ -129,6 +129,48 @@ def search_users(name: str = Query(default="", max_length=50)) -> list[dict]:
             ]
 
 
+@app.get("/users/{user_id}")
+def get_user_profile(
+    user_id: int,
+    viewer_id: int | None = Query(default=None),
+) -> dict:
+    with connect() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                SELECT u.id, u.username,
+                       (SELECT COUNT(*) FROM follows WHERE followed_id = u.id),
+                       (SELECT COUNT(*) FROM follows WHERE follower_id = u.id)
+                FROM users AS u
+                WHERE u.id = %s
+                """,
+                (user_id,),
+            )
+            row = cur.fetchone()
+            if row is None:
+                raise HTTPException(
+                    status_code=404, detail="Usuário não encontrado."
+                )
+            is_following = False
+            if viewer_id is not None:
+                cur.execute(
+                    """
+                    SELECT 1 FROM follows
+                    WHERE follower_id = %s AND followed_id = %s
+                    """,
+                    (viewer_id, user_id),
+                )
+                is_following = cur.fetchone() is not None
+            return {
+                "id": row[0],
+                "username": row[1],
+                "followers_count": row[2],
+                "following_count": row[3],
+                "is_following": is_following,
+                "reviews": _list_user_reviews(cur, user_id),
+            }
+
+
 @app.get("/users/{user_id}/reviews")
 def list_user_reviews(user_id: int) -> list[dict]:
     with connect() as conn:

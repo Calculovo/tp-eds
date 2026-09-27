@@ -25,9 +25,13 @@ class VoteIn(BaseModel):
     is_helpful: bool
 
 def get_or_create_user(cur, email: str) -> int:
+    username = email.split("@", 1)[0]
     cur.execute(
-        "INSERT INTO users (email) VALUES (%s) ON CONFLICT (email) DO NOTHING",
-        (email,),
+        """
+        INSERT INTO users (email, username) VALUES (%s, %s)
+        ON CONFLICT (email) DO NOTHING
+        """,
+        (email, username),
     )
     cur.execute("SELECT id FROM users WHERE email = %s", (email,))
     return cur.fetchone()[0]

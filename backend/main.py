@@ -1,6 +1,6 @@
 from contextlib import asynccontextmanager
-
 from fastapi import FastAPI, HTTPException, Query
+from pydantic import BaseModel, EmailStr, Field
 
 from db import connect, ensure_schema
 
@@ -14,6 +14,19 @@ async def lifespan(_app: FastAPI):
 
 app = FastAPI(lifespan=lifespan)
 
+
+class ReviewIn(BaseModel):
+    email: EmailStr
+    rating: float = Field(ge=1, le=5)
+    comment: str | None = None
+
+def get_or_create_user(cur, email: str) -> int:
+    cur.execute(
+        "INSERT INTO users (email) VALUES (%s) ON CONFLICT (email) DO NOTHING",
+        (email,),
+    )
+    cur.execute("SELECT id FROM users WHERE email = %s", (email,))
+    return cur.fetchone()[0]
 
 def _list_user_reviews(cur, user_id: int) -> list[dict]:
     cur.execute(
@@ -76,6 +89,32 @@ def search_restaurants(name: str = Query(default="", max_length=255)) -> list[di
                 for row in cur.fetchall()
             ]
 
+@app.post("/restaurants/{restaurant_id}/reviews", status_code=201)
+def create_review(restaurant_id: int, review: ReviewIn) -> dict:
+    with connect() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                "SELECT id FROM restaurants WHERE id = %s", (restaurant_id,)
+            )
+            if cur.fetchone() is None:
+                raise HTTPException(status_code=404, detail="Restaurant not found")
+
+            user_id = get_or_create_user(cur, review.email)
+
+            cur.execute(
+                """
+                INSERT INTO reviews (user_id, restaurant_id, rating, comment)
+                VALUES (%s, %s, %s, %s)
+                ON CONFLICT (user_id, restaurant_id)
+                DO UPDATE SET rating = EXCLUDED.rating, comment = EXCLUDED.comment
+                RETURNING id
+                """,
+                (user_id, restaurant_id, review.rating, review.comment),
+            )
+            review_id = cur.fetchone()[0]
+            conn.commit()
+
+    return {"id": review_id}
 
 @app.get("/restaurants/{restaurant_id}/reviews")
 def list_restaurant_reviews(restaurant_id: int) -> list[dict]:

@@ -185,3 +185,41 @@ def list_user_reviews(user_id: int) -> list[dict]:
                     status_code=404, detail="Usuário não encontrado."
                 )
             return _list_user_reviews(cur, user_id)
+
+
+@app.post("/users/{user_id}/follow")
+def follow_user(user_id: int, follower_id: int = Query()) -> dict:
+    if user_id == follower_id:
+        raise HTTPException(
+            status_code=400, detail="Não é possível seguir a si mesmo."
+        )
+    with connect() as conn:
+        with conn.cursor() as cur:
+            cur.execute("SELECT 1 FROM users WHERE id IN (%s, %s)", (user_id, follower_id))
+            if cur.fetchone() is None or cur.fetchone() is None:
+                raise HTTPException(
+                    status_code=404, detail="Usuário não encontrado."
+                )
+            cur.execute(
+                """
+                INSERT INTO follows (follower_id, followed_id)
+                VALUES (%s, %s)
+                ON CONFLICT DO NOTHING
+                """,
+                (follower_id, user_id),
+            )
+            return {"ok": True}
+
+
+@app.delete("/users/{user_id}/follow")
+def unfollow_user(user_id: int, follower_id: int = Query()) -> dict:
+    with connect() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                DELETE FROM follows
+                WHERE follower_id = %s AND followed_id = %s
+                """,
+                (follower_id, user_id),
+            )
+            return {"ok": True}

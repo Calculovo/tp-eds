@@ -6,17 +6,26 @@ app = FastAPI()
 
 
 @app.get("/restaurants")
-def search_restaurants(name: str = Query(min_length=1, max_length=255)) -> list[dict]:
+def search_restaurants(name: str = Query(default="", max_length=255)) -> list[dict]:
     with connect() as conn:
         with conn.cursor() as cur:
             cur.execute(
                 """
-                SELECT id, name, category, image_url
-                FROM restaurants
-                WHERE name ILIKE %s
-                ORDER BY name
+                SELECT r.id, r.name, r.category, r.image_url,
+                       AVG(rv.rating) AS average_rating,
+                      COUNT(rv.id) AS review_count,
+                      COUNT(rv.id) FILTER (WHERE ROUND(rv.rating) = 1),
+                      COUNT(rv.id) FILTER (WHERE ROUND(rv.rating) = 2),
+                      COUNT(rv.id) FILTER (WHERE ROUND(rv.rating) = 3),
+                      COUNT(rv.id) FILTER (WHERE ROUND(rv.rating) = 4),
+                      COUNT(rv.id) FILTER (WHERE ROUND(rv.rating) = 5)
+                FROM restaurants AS r
+                LEFT JOIN reviews AS rv ON rv.restaurant_id = r.id
+                WHERE %s = '' OR r.name ILIKE %s
+                GROUP BY r.id
+                ORDER BY r.name
                 """,
-                (f"%{name}%",),
+                (name, f"%{name}%"),
             )
             return [
                 {
@@ -24,6 +33,38 @@ def search_restaurants(name: str = Query(min_length=1, max_length=255)) -> list[
                     "name": row[1],
                     "category": row[2],
                     "image_url": row[3],
+                    "average_rating": (
+                        float(row[4]) if row[4] is not None else None
+                    ),
+                    "review_count": row[5],
+                    "rating_counts": list(row[6:11]),
+                }
+                for row in cur.fetchall()
+            ]
+
+
+@app.get("/restaurants/{restaurant_id}/reviews")
+def list_restaurant_reviews(restaurant_id: int) -> list[dict]:
+    with connect() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                SELECT rv.id, u.email, rv.rating, rv.comment
+                FROM reviews AS rv
+                JOIN users AS u ON u.id = rv.user_id
+                WHERE rv.restaurant_id = %s
+                  AND rv.comment IS NOT NULL
+                  AND BTRIM(rv.comment) <> ''
+                ORDER BY rv.id DESC
+                """,
+                (restaurant_id,),
+            )
+            return [
+                {
+                    "id": row[0],
+                    "email": row[1],
+                    "rating": float(row[2]),
+                    "comment": row[3],
                 }
                 for row in cur.fetchall()
             ]

@@ -78,3 +78,28 @@ def list_restaurant_reviews(restaurant_id: int) -> list[dict]:
                 }
                 for row in cur.fetchall()
             ]
+
+
+@app.get("/users")
+def search_users(name: str = Query(default="", max_length=50)) -> list[dict]:
+    with connect() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                SELECT u.id, u.username, COUNT(rv.id) AS review_count
+                FROM users AS u
+                LEFT JOIN reviews AS rv ON rv.user_id = u.id
+                WHERE %s = '' OR u.username ILIKE %s
+                GROUP BY u.id
+                ORDER BY u.username
+                """,
+                (name, f"%{name}%"),
+            )
+            return [
+                {
+                    "id": row[0],
+                    "username": row[1],
+                    "review_count": row[2],
+                }
+                for row in cur.fetchall()
+            ]

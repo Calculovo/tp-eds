@@ -20,6 +20,10 @@ class ReviewIn(BaseModel):
     rating: float = Field(ge=1, le=5)
     comment: str | None = None
 
+class VoteIn(BaseModel):
+    email: EmailStr
+    is_helpful: bool
+
 def get_or_create_user(cur, email: str) -> int:
     cur.execute(
         "INSERT INTO users (email) VALUES (%s) ON CONFLICT (email) DO NOTHING",

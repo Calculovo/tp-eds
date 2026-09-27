@@ -25,3 +25,11 @@ CREATE TABLE reviews (
     rating NUMERIC(2, 1) NOT NULL CHECK (rating >= 1 AND rating <= 5),
     comment TEXT
 );
+
+CREATE TABLE review_votes (
+    id SERIAL PRIMARY KEY,
+    review_id INTEGER NOT NULL REFERENCES reviews(id),
+    user_id INTEGER NOT NULL REFERENCES users(id),
+    is_helpful BOOLEAN NOT NULL,
+    UNIQUE (review_id, user_id)
+);

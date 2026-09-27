@@ -120,6 +120,30 @@ def create_review(restaurant_id: int, review: ReviewIn) -> dict:
 
     return {"id": review_id}
 
+
+@app.post("/reviews/{review_id}/votes", status_code=201)
+def vote_review(review_id: int, vote: VoteIn) -> dict:
+    with connect() as conn:
+        with conn.cursor() as cur:
+            cur.execute("SELECT id FROM reviews WHERE id = %s", (review_id,))
+            if cur.fetchone() is None:
+                raise HTTPException(status_code=404, detail="Review not found")
+
+            user_id = get_or_create_user(cur, vote.email)
+
+            cur.execute(
+                """
+                INSERT INTO review_votes (review_id, user_id, is_helpful)
+                VALUES (%s, %s, %s)
+                ON CONFLICT (review_id, user_id)
+                DO UPDATE SET is_helpful = EXCLUDED.is_helpful
+                """,
+                (review_id, user_id, vote.is_helpful),
+            )
+            conn.commit()
+
+    return {"status": "ok"}
+
 @app.get("/restaurants/{restaurant_id}/reviews")
 def list_restaurant_reviews(restaurant_id: int) -> list[dict]:
     with connect() as conn:

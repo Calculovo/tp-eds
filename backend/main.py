@@ -1,6 +1,6 @@
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, Query
+from fastapi import FastAPI, HTTPException, Query
 
 from db import connect, ensure_schema
 
@@ -13,6 +13,30 @@ async def lifespan(_app: FastAPI):
 
 
 app = FastAPI(lifespan=lifespan)
+
+
+def _list_user_reviews(cur, user_id: int) -> list[dict]:
+    cur.execute(
+        """
+        SELECT rv.id, r.id, r.name, r.image_url, rv.rating, rv.comment
+        FROM reviews AS rv
+        JOIN restaurants AS r ON r.id = rv.restaurant_id
+        WHERE rv.user_id = %s
+        ORDER BY rv.id DESC
+        """,
+        (user_id,),
+    )
+    return [
+        {
+            "id": row[0],
+            "restaurant_id": row[1],
+            "restaurant_name": row[2],
+            "restaurant_image_url": row[3],
+            "rating": float(row[4]),
+            "comment": row[5],
+        }
+        for row in cur.fetchall()
+    ]
 
 
 @app.get("/restaurants")
@@ -103,3 +127,15 @@ def search_users(name: str = Query(default="", max_length=50)) -> list[dict]:
                 }
                 for row in cur.fetchall()
             ]
+
+
+@app.get("/users/{user_id}/reviews")
+def list_user_reviews(user_id: int) -> list[dict]:
+    with connect() as conn:
+        with conn.cursor() as cur:
+            cur.execute("SELECT 1 FROM users WHERE id = %s", (user_id,))
+            if cur.fetchone() is None:
+                raise HTTPException(
+                    status_code=404, detail="Usuário não encontrado."
+                )
+            return _list_user_reviews(cur, user_id)

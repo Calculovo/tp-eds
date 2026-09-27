@@ -83,7 +83,7 @@ def list_restaurant_reviews(restaurant_id: int) -> list[dict]:
         with conn.cursor() as cur:
             cur.execute(
                 """
-                SELECT rv.id, u.email, rv.rating, rv.comment
+                SELECT rv.id, u.id, u.username, u.email, rv.rating, rv.comment
                 FROM reviews AS rv
                 JOIN users AS u ON u.id = rv.user_id
                 WHERE rv.restaurant_id = %s
@@ -96,9 +96,11 @@ def list_restaurant_reviews(restaurant_id: int) -> list[dict]:
             return [
                 {
                     "id": row[0],
-                    "email": row[1],
-                    "rating": float(row[2]),
-                    "comment": row[3],
+                    "user_id": row[1],
+                    "username": row[2],
+                    "email": row[3],
+                    "rating": float(row[4]),
+                    "comment": row[5],
                 }
                 for row in cur.fetchall()
             ]

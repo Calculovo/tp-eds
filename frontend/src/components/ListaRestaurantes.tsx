@@ -1,8 +1,10 @@
 import { useEffect, useState, type FormEvent } from 'react'
+import BuscaUsuarios from './BuscaUsuarios'
 
 type ListaRestaurantesProps = {
   email: string
   onSelecionarRestaurante: (restaurante: Restaurante) => void
+  onSelecionarUsuario: (userId: number) => void
   onLogout: () => void
 }
 
@@ -47,6 +49,7 @@ async function carregarRestaurantes(nome: string): Promise<Restaurante[]> {
 function ListaRestaurantes({
   email,
   onSelecionarRestaurante,
+  onSelecionarUsuario,
   onLogout,
 }: ListaRestaurantesProps) {
   const [nomeBusca, setNomeBusca] = useState('')
@@ -99,6 +102,8 @@ function ListaRestaurantes({
           Sair
         </button>
       </header>
+
+      <BuscaUsuarios onSelecionarUsuario={onSelecionarUsuario} />
 
       <form onSubmit={buscarRestaurantes} className="mb-8 flex gap-2">
         <input

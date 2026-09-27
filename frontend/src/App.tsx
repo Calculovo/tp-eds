@@ -4,12 +4,15 @@ import ListaRestaurantes, {
   type Restaurante,
 } from './components/ListaRestaurantes'
 import Login from './components/Login'
+import PerfilUsuario from './components/PerfilUsuario'
 
 // As 3 telas possíveis do app nesta simulação.
 type Tela = 'login' | 'cadastro' | 'logado'
 
 type AvaliacaoRestaurante = {
   id: number
+  user_id: number
+  username: string
   email: string
   rating: number
   comment: string
@@ -18,6 +21,8 @@ type AvaliacaoRestaurante = {
 function App() {
   const [tela, setTela] = useState<Tela>('login')
   const [emailLogado, setEmailLogado] = useState('')
+  const [viewerId, setViewerId] = useState<number | null>(null)
+  const [usuarioSelecionado, setUsuarioSelecionado] = useState<number | null>(null)
   const [restauranteSelecionado, setRestauranteSelecionado] =
     useState<Restaurante | null>(null)
   const [avaliacoes, setAvaliacoes] = useState<AvaliacaoRestaurante[]>([])
@@ -60,8 +65,37 @@ function App() {
     }
   }, [restauranteSelecionado?.id])
 
+  useEffect(() => {
+    if (!emailLogado) {
+      setViewerId(null)
+      return
+    }
+    let ativa = true
+    fetch(`/api/users?email=${encodeURIComponent(emailLogado)}`)
+      .then((resposta) => resposta.json() as Promise<{ id: number }[]>)
+      .then((usuarios) => {
+        if (ativa) setViewerId(usuarios[0]?.id ?? null)
+      })
+      .catch(() => {
+        if (ativa) setViewerId(null)
+      })
+    return () => {
+      ativa = false
+    }
+  }, [emailLogado])
+
   if (tela === 'cadastro') {
     return <Cadastro onIrParaLogin={() => setTela('login')} />
+  }
+
+  if (tela === 'logado' && usuarioSelecionado !== null) {
+    return (
+      <PerfilUsuario
+        userId={usuarioSelecionado}
+        viewerId={viewerId}
+        onVoltar={() => setUsuarioSelecionado(null)}
+      />
+    )
   }
 
   if (tela === 'logado') {
@@ -71,8 +105,10 @@ function App() {
           <ListaRestaurantes
             email={emailLogado}
             onSelecionarRestaurante={setRestauranteSelecionado}
+            onSelecionarUsuario={setUsuarioSelecionado}
             onLogout={() => {
               setRestauranteSelecionado(null)
+              setUsuarioSelecionado(null)
               setEmailLogado('')
               setTela('login')
             }}
@@ -180,7 +216,13 @@ function App() {
                 {avaliacoes.map((avaliacao) => (
                   <article key={avaliacao.id} className="border-b border-zinc-200 py-4 first:pt-0">
                     <div className="flex items-start justify-between gap-3">
-                      <p className="break-all text-sm font-medium text-zinc-800">{avaliacao.email}</p>
+                      <button
+                        type="button"
+                        onClick={() => setUsuarioSelecionado(avaliacao.user_id)}
+                        className="break-all text-left text-sm font-medium text-emerald-800 hover:underline"
+                      >
+                        {avaliacao.username}
+                      </button>
                       <p className="shrink-0 text-sm font-semibold text-amber-600">★ {avaliacao.rating.toFixed(1)}</p>
                     </div>
                     <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-zinc-700">{avaliacao.comment}</p>

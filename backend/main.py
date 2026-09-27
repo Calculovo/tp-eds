@@ -1,8 +1,18 @@
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI, Query
 
-from db import connect
+from db import connect, ensure_schema
 
-app = FastAPI()
+
+@asynccontextmanager
+async def lifespan(_app: FastAPI):
+    with connect() as conn:
+        ensure_schema(conn)
+    yield
+
+
+app = FastAPI(lifespan=lifespan)
 
 
 @app.get("/restaurants")

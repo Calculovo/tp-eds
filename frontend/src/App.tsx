@@ -1,14 +1,12 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import Cadastro from './components/Cadastro'
-import ListaRestaurantes, {
-  type Restaurante,
-} from './components/ListaRestaurantes'
+import ListaRestaurantes from './components/ListaRestaurantes'
 import Login from './components/Login'
 import PerfilUsuario from './components/PerfilUsuario'
 
-// As 3 telas possíveis do app nesta simulação.
 type Tela = 'login' | 'cadastro' | 'logado'
 
+<<<<<<< HEAD
 type AvaliacaoRestaurante = {
   id: number
   user_id: number
@@ -64,6 +62,12 @@ function App() {
       ativa = false
     }
   }, [restauranteSelecionado?.id])
+=======
+function App() {
+  const [tela, setTela] = useState<Tela>('login')
+  const [emailLogado, setEmailLogado] = useState('')
+  const [nomeLogado, setNomeLogado] = useState('')
+>>>>>>> ddd1aa4732d6a66e6eeadd439eeabbed9d5f297d
 
   useEffect(() => {
     if (!emailLogado) {
@@ -85,6 +89,7 @@ function App() {
   }, [emailLogado])
 
   if (tela === 'cadastro') {
+<<<<<<< HEAD
     return <Cadastro onIrParaLogin={() => setTela('login')} />
   }
 
@@ -233,14 +238,54 @@ function App() {
           </main>
         )}
       </>
+=======
+    return (
+      <Cadastro
+        onIrParaLogin={() => setTela('login')}
+        onCadastroSucesso={(nomeCadastrado) => {
+          // Recebe o nome que foi digitado no cadastro
+          setNomeLogado(nomeCadastrado)
+        }}
+      />
+>>>>>>> ddd1aa4732d6a66e6eeadd439eeabbed9d5f297d
     )
   }
 
+  if (tela === 'logado') {
+    // Se por acaso o nomeLogado estiver vazio (contas antigas), geramos um nome bonito baseado no e-mail
+    const nomeExibicao = nomeLogado || emailLogado.split('@')[0]
+      .split('.')
+      .map(parte => parte.charAt(0).toUpperCase() + parte.slice(1))
+      .join(' ')
+
+    return (
+      <ListaRestaurantes
+        email={emailLogado}
+        nome={nomeExibicao} // Sempre envia um nome formatado, nunca o e-mail cru
+        onLogout={() => {
+          setEmailLogado('')
+          setNomeLogado('')
+          setTela('login')
+        }}
+      />
+    )
+  }
   return (
     <Login
       onIrParaCadastro={() => setTela('cadastro')}
       onLoginSucesso={(email) => {
         setEmailLogado(email)
+        
+        // Se já temos um nome guardado do cadastro recente, usamos ele.
+        // Se não (contas antigas), pegamos o e-mail e formatamos um nome elegante!
+        if (!nomeLogado) {
+          const partes = email.split('@')[0].split('.')
+          const nomeFormatado = partes
+            .map(parte => parte.charAt(0).toUpperCase() + parte.slice(1))
+            .join(' ')
+          setNomeLogado(nomeFormatado)
+        }
+        
         setTela('logado')
       }}
     />

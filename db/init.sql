@@ -7,7 +7,15 @@ CREATE TABLE restaurants (
 
 CREATE TABLE users (
     id SERIAL PRIMARY KEY,
-    email VARCHAR(255) NOT NULL UNIQUE
+    email VARCHAR(255) NOT NULL UNIQUE,
+    username VARCHAR(50) NOT NULL UNIQUE
+);
+
+CREATE TABLE follows (
+    follower_id INTEGER NOT NULL REFERENCES users(id),
+    followed_id INTEGER NOT NULL REFERENCES users(id),
+    PRIMARY KEY (follower_id, followed_id),
+    CHECK (follower_id <> followed_id)
 );
 
 CREATE TABLE reviews (

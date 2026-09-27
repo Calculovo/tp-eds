@@ -63,6 +63,19 @@ SAMPLE_FOLLOWS = [
     ("elisa@example.com", "carla@example.com"),
 ]
 
+SAMPLE_VOTES = [
+    ("bruno@example.com", "ana@example.com", "Pizzaria Bella Italia", True),
+    ("carla@example.com", "ana@example.com", "Pizzaria Bella Italia", True),
+    ("diego@example.com", "ana@example.com", "Pizzaria Bella Italia", True),
+    ("ana@example.com", "bruno@example.com", "Pizzaria Bella Italia", False),
+    ("elisa@example.com", "bruno@example.com", "Pizzaria Bella Italia", True),
+    ("ana@example.com", "carla@example.com", "Burguer House", True),
+    ("elisa@example.com", "diego@example.com", "Burguer House", True),
+    ("bruno@example.com", "diego@example.com", "Burguer House", False),
+    ("ana@example.com", "elisa@example.com", "Sushi Garden", True),
+    ("carla@example.com", "elisa@example.com", "Sushi Garden", True),
+]
+
 
 def seed_reviews(cur) -> None:
     for email, restaurant_name, rating, comment in SAMPLE_REVIEWS:
@@ -99,6 +112,34 @@ def seed_reviews(cur) -> None:
                 (user_id, restaurant_id, rating, comment),
             )
 
+def seed_votes(cur) -> None:
+    for voter_email, author_email, restaurant_name, is_like in SAMPLE_VOTES:
+        cur.execute("SELECT id FROM users WHERE email = %s", (voter_email,))
+        voter = cur.fetchone()
+
+        cur.execute(
+            """
+            SELECT rv.id
+            FROM reviews AS rv
+            JOIN users AS u ON u.id = rv.user_id
+            JOIN restaurants AS r ON r.id = rv.restaurant_id
+            WHERE u.email = %s AND r.name = %s
+            """,
+            (author_email, restaurant_name),
+        )
+        review = cur.fetchone()
+
+        if voter is None or review is None:
+            continue
+
+        cur.execute(
+            """
+            INSERT INTO review_votes (review_id, user_id, is_like)
+            VALUES (%s, %s, %s)
+            ON CONFLICT (review_id, user_id) DO NOTHING
+            """,
+            (review[0], voter[0], is_like),
+        )
 
 def seed_follows(cur) -> None:
     for follower_email, followed_email in SAMPLE_FOLLOWS:
@@ -130,6 +171,7 @@ def seed() -> None:
                 )
             seed_reviews(cur)
             seed_follows(cur)
+            seed_votes(cur)
             cur.execute(
                 """
                 SELECT r.name, AVG(rv.rating), COUNT(rv.id)

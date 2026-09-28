@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from 'react'
 import { validarLogin } from '../usuarios'
+import BrandLogo from './BrandLogo'
 
 type LoginProps = {
   onIrParaCadastro: () => void
@@ -33,12 +34,14 @@ function Login({ onIrParaCadastro, onLoginSucesso }: LoginProps) {
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-zinc-100 p-4">
+    <main className="flex min-h-screen items-center justify-center bg-brand-cream p-4">
       <form
         onSubmit={entrar}
-        className="w-full max-w-sm rounded-xl bg-white p-6 shadow"
+        className="w-full max-w-sm rounded-xl border border-brand-brown/10 bg-brand-cream p-6 shadow-lg"
       >
-        <h1 className="mb-6 text-center text-2xl font-bold">RestauranK</h1>
+        <div className="mb-6 flex justify-center">
+          <BrandLogo />
+        </div>
         <p className="mb-4 text-center text-sm text-zinc-500">Entrar</p>
 
         <label className="mb-1 block text-sm" htmlFor="email">
@@ -65,12 +68,12 @@ function Login({ onIrParaCadastro, onLoginSucesso }: LoginProps) {
           required
         />
 
-        {erro && <p className="mb-4 text-sm text-red-600">{erro}</p>}
+        {erro && <p className="mb-4 text-sm text-brand-tomato">{erro}</p>}
 
         <button
           type="submit"
           disabled={carregando}
-          className="w-full rounded bg-amber-400 py-2 font-medium text-zinc-900 hover:bg-amber-300"
+          className="w-full rounded bg-brand-tomato py-2 font-medium text-white hover:bg-brand-brown"
         >
           {carregando ? 'Conectando...' : 'Entrar'}
         </button>

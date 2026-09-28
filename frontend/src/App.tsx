@@ -91,6 +91,7 @@ function App() {
   if (tela === 'logado' && usuarioSelecionado !== null) {
     return (
       <PerfilUsuario
+        key={usuarioSelecionado}
         userId={usuarioSelecionado}
         viewerId={viewerId}
         onVoltar={() => setUsuarioSelecionado(null)}

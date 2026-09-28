@@ -264,6 +264,47 @@ def list_user_reviews(user_id: int) -> list[dict]:
             return _list_user_reviews(cur, user_id)
 
 
+def _list_follow_relationships(user_id: int, relationship: str) -> list[dict]:
+    if relationship == "followers":
+        join_column = "f.follower_id"
+        filter_column = "f.followed_id"
+    else:
+        join_column = "f.followed_id"
+        filter_column = "f.follower_id"
+
+    with connect() as conn:
+        with conn.cursor() as cur:
+            cur.execute("SELECT 1 FROM users WHERE id = %s", (user_id,))
+            if cur.fetchone() is None:
+                raise HTTPException(
+                    status_code=404, detail="Usuário não encontrado."
+                )
+            cur.execute(
+                f"""
+                SELECT u.id, u.username
+                FROM follows AS f
+                JOIN users AS u ON u.id = {join_column}
+                WHERE {filter_column} = %s
+                ORDER BY u.username
+                """,
+                (user_id,),
+            )
+            return [
+                {"id": row[0], "username": row[1]}
+                for row in cur.fetchall()
+            ]
+
+
+@app.get("/users/{user_id}/followers")
+def list_user_followers(user_id: int) -> list[dict]:
+    return _list_follow_relationships(user_id, "followers")
+
+
+@app.get("/users/{user_id}/following")
+def list_user_following(user_id: int) -> list[dict]:
+    return _list_follow_relationships(user_id, "following")
+
+
 @app.post("/users/{user_id}/follow")
 def follow_user(user_id: int, follower_id: int = Query()) -> dict:
     if user_id == follower_id:

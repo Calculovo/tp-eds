@@ -239,7 +239,15 @@ function App() {
   return (
     <Login
       onIrParaCadastro={() => setTela('cadastro')}
-      onLoginSucesso={(email) => {
+      onLoginSucesso={async (email) => {
+        const resposta = await fetch('/api/users', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email }),
+        })
+        if (!resposta.ok) {
+          throw new Error('Não foi possível preparar a conta no servidor.')
+        }
         setEmailLogado(email)
         setTela('logado')
       }}

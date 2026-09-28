@@ -3,15 +3,16 @@ import { validarLogin } from '../usuarios'
 
 type LoginProps = {
   onIrParaCadastro: () => void
-  onLoginSucesso: (email: string) => void
+  onLoginSucesso: (email: string) => Promise<void>
 }
 
 function Login({ onIrParaCadastro, onLoginSucesso }: LoginProps) {
   const [email, setEmail] = useState('')
   const [senha, setSenha] = useState('')
   const [erro, setErro] = useState('')
+  const [carregando, setCarregando] = useState(false)
 
-  function entrar(evento: FormEvent) {
+  async function entrar(evento: FormEvent) {
     evento.preventDefault()
 
     const deuCerto = validarLogin(email, senha)
@@ -20,7 +21,15 @@ function Login({ onIrParaCadastro, onLoginSucesso }: LoginProps) {
       return
     }
 
-    onLoginSucesso(email)
+    setCarregando(true)
+    setErro('')
+    try {
+      await onLoginSucesso(email)
+    } catch {
+      setErro('Não foi possível conectar ao servidor. Tente novamente.')
+    } finally {
+      setCarregando(false)
+    }
   }
 
   return (
@@ -60,9 +69,10 @@ function Login({ onIrParaCadastro, onLoginSucesso }: LoginProps) {
 
         <button
           type="submit"
+          disabled={carregando}
           className="w-full rounded bg-amber-400 py-2 font-medium text-zinc-900 hover:bg-amber-300"
         >
-          Entrar
+          {carregando ? 'Conectando...' : 'Entrar'}
         </button>
 
         <button

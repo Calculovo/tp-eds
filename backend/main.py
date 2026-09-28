@@ -24,6 +24,9 @@ class VoteIn(BaseModel):
     email: EmailStr
     is_helpful: bool
 
+class UserIn(BaseModel):
+    email: EmailStr
+
 def _list_user_reviews(cur, user_id: int) -> list[dict]:
     cur.execute(
         """
@@ -192,6 +195,19 @@ def search_users(
                 }
                 for row in cur.fetchall()
             ]
+
+
+@app.post("/users", status_code=201)
+def create_or_get_user(user: UserIn) -> dict:
+    with connect() as conn:
+            with conn.cursor() as cur:
+                user_id = get_or_create_user(cur, str(user.email))
+                cur.execute(
+                    "SELECT username FROM users WHERE id = %s",
+                    (user_id,),
+                )
+                row = cur.fetchone()
+                return {"id": user_id, "username": row[0]}
 
 
 @app.get("/users/{user_id}")

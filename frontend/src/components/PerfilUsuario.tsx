@@ -78,27 +78,47 @@ function PerfilUsuario({
       {perfil && (
         <>
           <header className="mb-8 flex flex-wrap items-end justify-between gap-4">
-            <div>
-              <h1 className="text-3xl font-bold text-brand-brown">{perfil.username}</h1>
-              <div className="mt-2 flex gap-4 text-sm">
-                <button
-                  type="button"
-                  onClick={() => setListaSelecionada('followers')}
-                  aria-expanded={listaSelecionada === 'followers'}
-                  className="text-zinc-600 hover:text-brand-tomato hover:underline"
-                >
-                  {perfil.followers_count} seguidores
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setListaSelecionada('following')}
-                  aria-expanded={listaSelecionada === 'following'}
-                  className="text-zinc-600 hover:text-brand-tomato hover:underline"
-                >
-                  {perfil.following_count} seguindo
-                </button>
+            <div className="flex items-center gap-6">
+              {/* Espaço para a foto de perfil (avatar genérico por enquanto) */}
+              <div className="flex h-24 w-24 items-center justify-center rounded-full bg-brand-tomato text-4xl font-bold text-white">
+                {perfil.username.charAt(0).toUpperCase()}
+              </div>
+              
+              <div>
+                <h1 className="text-3xl font-bold text-brand-brown">{perfil.username}</h1>
+                <div className="mt-2 flex gap-4 text-sm">
+                  <button
+                    type="button"
+                    onClick={() => setListaSelecionada('followers')}
+                    aria-expanded={listaSelecionada === 'followers'}
+                    className="text-zinc-600 hover:text-brand-tomato hover:underline"
+                  >
+                    {perfil.followers_count} seguidores
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setListaSelecionada('following')}
+                    aria-expanded={listaSelecionada === 'following'}
+                    className="text-zinc-600 hover:text-brand-tomato hover:underline"
+                  >
+                    {perfil.following_count} seguindo
+                  </button>
+                </div>
+                
+                {/* Botões de Edição: Só aparecem se for o dono do perfil */}
+                {viewerId === userId && (
+                  <div className="mt-4 flex gap-2">
+                    <button type="button" className="rounded border border-brand-tomato px-3 py-1 text-xs font-medium text-brand-tomato hover:bg-brand-tomato/10">
+                      Editar Foto
+                    </button>
+                    <button type="button" className="rounded border border-brand-tomato px-3 py-1 text-xs font-medium text-brand-tomato hover:bg-brand-tomato/10">
+                      Editar Nome
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
+
             {podeSeguir && (
               <button
                 type="button"

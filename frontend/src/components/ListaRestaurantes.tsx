@@ -92,20 +92,25 @@ function ListaRestaurantes({
 
   return (
     <main className="min-h-screen bg-brand-cream p-8">
-      <header className="mb-8 flex items-center justify-between">
+     <header className="mb-8 flex items-center justify-between">
         <div>
           <BrandLogo />
-          <p className="text-sm text-zinc-600">Olá, {email}</p>
+          {/* Extrai o nome antes do @ para a saudação */}
+          <p className="text-sm text-zinc-600">Olá, {email.split('@')[0]}</p>
         </div>
-        <nav className="flex items-center gap-2">
+        <nav className="flex items-center gap-4">
+          {/* Botão de avatar redondo vermelho */}
           <button
             type="button"
             onClick={() => viewerId !== null && onSelecionarUsuario(viewerId)}
             disabled={viewerId === null}
-            className="rounded border border-brand-tomato px-3 py-1 text-sm font-medium text-brand-tomato hover:bg-brand-tomato/10 disabled:opacity-60"
+            aria-label="Meu perfil"
+            title="Meu perfil"
+            className="flex h-10 w-10 items-center justify-center rounded-full bg-brand-tomato text-lg font-bold text-white transition hover:bg-brand-brown disabled:opacity-60"
           >
-            Meu perfil
+            {email.charAt(0).toUpperCase()}
           </button>
+          
           <button
             type="button"
             onClick={onLogout}

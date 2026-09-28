@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import ListaRelacoes from './ListaRelacoes'
 
 type Review = {
   id: number
@@ -21,12 +22,20 @@ type PerfilUsuarioProps = {
   userId: number
   viewerId: number | null
   onVoltar: () => void
+  onSelecionarUsuario: (userId: number) => void
 }
 
-function PerfilUsuario({ userId, viewerId, onVoltar }: PerfilUsuarioProps) {
+function PerfilUsuario({
+  userId,
+  viewerId,
+  onVoltar,
+  onSelecionarUsuario,
+}: PerfilUsuarioProps) {
   const [perfil, setPerfil] = useState<Perfil | null>(null)
   const [erro, setErro] = useState('')
   const [carregando, setCarregando] = useState(true)
+  const [listaSelecionada, setListaSelecionada] =
+    useState<'followers' | 'following' | null>(null)
   const podeSeguir = viewerId !== null && viewerId !== userId
 
   useEffect(() => {
@@ -67,7 +76,24 @@ function PerfilUsuario({ userId, viewerId, onVoltar }: PerfilUsuarioProps) {
           <header className="mb-8 flex flex-wrap items-end justify-between gap-4">
             <div>
               <h1 className="text-3xl font-bold text-zinc-900">{perfil.username}</h1>
-              <p className="mt-2 text-sm text-zinc-600">{perfil.followers_count} seguidores · {perfil.following_count} seguindo</p>
+              <div className="mt-2 flex gap-4 text-sm">
+                <button
+                  type="button"
+                  onClick={() => setListaSelecionada('followers')}
+                  aria-expanded={listaSelecionada === 'followers'}
+                  className="text-zinc-600 hover:text-emerald-800 hover:underline"
+                >
+                  {perfil.followers_count} seguidores
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setListaSelecionada('following')}
+                  aria-expanded={listaSelecionada === 'following'}
+                  className="text-zinc-600 hover:text-emerald-800 hover:underline"
+                >
+                  {perfil.following_count} seguindo
+                </button>
+              </div>
             </div>
             {podeSeguir && (
               <button
@@ -83,6 +109,14 @@ function PerfilUsuario({ userId, viewerId, onVoltar }: PerfilUsuarioProps) {
               </button>
             )}
           </header>
+          {listaSelecionada && (
+            <ListaRelacoes
+              userId={userId}
+              tipo={listaSelecionada}
+              aoFechar={() => setListaSelecionada(null)}
+              aoSelecionarUsuario={onSelecionarUsuario}
+            />
+          )}
           <h2 className="mb-4 text-xl font-semibold text-zinc-900">Histórico de reviews</h2>
           {perfil.reviews.length === 0 && <p className="text-sm text-zinc-600">Este usuário ainda não fez reviews.</p>}
           <ul className="space-y-4">

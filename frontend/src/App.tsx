@@ -94,6 +94,7 @@ function App() {
         userId={usuarioSelecionado}
         viewerId={viewerId}
         onVoltar={() => setUsuarioSelecionado(null)}
+        onSelecionarUsuario={setUsuarioSelecionado}
       />
     )
   }

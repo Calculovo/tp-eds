@@ -3,6 +3,7 @@ import BuscaUsuarios from './BuscaUsuarios'
 
 type ListaRestaurantesProps = {
   email: string
+  viewerId: number | null
   onSelecionarRestaurante: (restaurante: Restaurante) => void
   onSelecionarUsuario: (userId: number) => void
   onLogout: () => void
@@ -48,6 +49,7 @@ async function carregarRestaurantes(nome: string): Promise<Restaurante[]> {
 
 function ListaRestaurantes({
   email,
+  viewerId,
   onSelecionarRestaurante,
   onSelecionarUsuario,
   onLogout,
@@ -94,13 +96,23 @@ function ListaRestaurantes({
           <h1 className="text-2xl font-bold">RestauranK</h1>
           <p className="text-sm text-zinc-600">Olá, {email}</p>
         </div>
-        <button
-          type="button"
-          onClick={onLogout}
-          className="rounded bg-red-500 px-3 py-1 text-sm text-white hover:bg-red-600"
-        >
-          Sair
-        </button>
+        <nav className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => viewerId !== null && onSelecionarUsuario(viewerId)}
+            disabled={viewerId === null}
+            className="rounded border border-emerald-700 px-3 py-1 text-sm font-medium text-emerald-800 hover:bg-emerald-50 disabled:opacity-60"
+          >
+            Meu perfil
+          </button>
+          <button
+            type="button"
+            onClick={onLogout}
+            className="rounded bg-red-500 px-3 py-1 text-sm text-white hover:bg-red-600"
+          >
+            Sair
+          </button>
+        </nav>
       </header>
 
       <BuscaUsuarios onSelecionarUsuario={onSelecionarUsuario} />

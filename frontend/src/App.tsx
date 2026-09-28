@@ -104,6 +104,7 @@ function App() {
         <div hidden={restauranteSelecionado !== null}>
           <ListaRestaurantes
             email={emailLogado}
+            viewerId={viewerId}
             onSelecionarRestaurante={setRestauranteSelecionado}
             onSelecionarUsuario={setUsuarioSelecionado}
             onLogout={() => {

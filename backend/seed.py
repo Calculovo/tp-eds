@@ -1,4 +1,4 @@
-from db import connect, ensure_schema
+from db import connect, ensure_schema, get_or_create_user
 
 RESTAURANTS = [
     (
@@ -88,16 +88,7 @@ def seed_reviews(cur) -> None:
             raise ValueError(f"Restaurant not found: {restaurant_name}")
         restaurant_id = restaurant[0]
 
-        username = email.split("@", 1)[0]
-        cur.execute(
-            """
-            INSERT INTO users (email, username) VALUES (%s, %s)
-            ON CONFLICT (email) DO NOTHING
-            """,
-            (email, username),
-        )
-        cur.execute("SELECT id FROM users WHERE email = %s", (email,))
-        user_id = cur.fetchone()[0]
+        user_id = get_or_create_user(cur, email)
 
         cur.execute(
             "SELECT 1 FROM reviews WHERE user_id = %s AND restaurant_id = %s",

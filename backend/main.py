@@ -2,7 +2,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI, HTTPException, Query
 from pydantic import BaseModel, EmailStr, Field
 
-from db import connect, ensure_schema
+from db import connect, ensure_schema, get_or_create_user
 
 
 @asynccontextmanager
@@ -23,18 +23,6 @@ class ReviewIn(BaseModel):
 class VoteIn(BaseModel):
     email: EmailStr
     is_helpful: bool
-
-def get_or_create_user(cur, email: str) -> int:
-    username = email.split("@", 1)[0]
-    cur.execute(
-        """
-        INSERT INTO users (email, username) VALUES (%s, %s)
-        ON CONFLICT (email) DO NOTHING
-        """,
-        (email, username),
-    )
-    cur.execute("SELECT id FROM users WHERE email = %s", (email,))
-    return cur.fetchone()[0]
 
 def _list_user_reviews(cur, user_id: int) -> list[dict]:
     cur.execute(

@@ -125,7 +125,7 @@ def seed_votes(cur) -> None:
 
         cur.execute(
             """
-            INSERT INTO review_votes (review_id, user_id, is_like)
+            INSERT INTO review_votes (review_id, user_id, is_helpful)
             VALUES (%s, %s, %s)
             ON CONFLICT (review_id, user_id) DO NOTHING
             """,

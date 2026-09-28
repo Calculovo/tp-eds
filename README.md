@@ -1,5 +1,18 @@
 # tp-eds
 
+## Como executar
+
+Com o Docker Desktop instalado e em execução, inicie o banco de dados, a API e o site de uma vez:
+
+```sh
+docker compose up --build
+```
+
+Quando os serviços estiverem prontos, acesse o site em <http://localhost:5173>. A API fica disponível em <http://localhost:8000>.
+Os dados de exemplo de `backend/seed.py` são inseridos automaticamente na inicialização, sem duplicação ao reiniciar.
+
+Para encerrar os serviços, pressione `Ctrl+C`. Para também remover os containers, execute `docker compose down`.
+
 ## Membros
 - Camila de Almeida Ribeiro (backend)
 - Emerson Araújo Simões (full)

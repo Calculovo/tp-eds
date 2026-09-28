@@ -70,8 +70,16 @@ function PerfilUsuario({ userId, viewerId, onVoltar }: PerfilUsuarioProps) {
               <p className="mt-2 text-sm text-zinc-600">{perfil.followers_count} seguidores · {perfil.following_count} seguindo</p>
             </div>
             {podeSeguir && (
-              <button type="button" onClick={alternarSeguir} className="rounded bg-emerald-700 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-800">
-                {perfil.is_following ? 'Seguindo' : 'Seguir'}
+              <button
+                type="button"
+                onClick={alternarSeguir}
+                className={`rounded px-4 py-2 text-sm font-medium text-white ${
+                  perfil.is_following
+                    ? 'bg-red-600 hover:bg-red-700'
+                    : 'bg-emerald-700 hover:bg-emerald-800'
+                }`}
+              >
+                {perfil.is_following ? 'Deixar de seguir' : 'Seguir'}
               </button>
             )}
           </header>

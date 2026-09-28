@@ -5,6 +5,7 @@ import ListaRestaurantes, {
 } from './components/ListaRestaurantes'
 import Login from './components/Login'
 import PerfilUsuario from './components/PerfilUsuario'
+import BrandLogo from './components/BrandLogo'
 
 // As 3 telas possíveis do app nesta simulação.
 type Tela = 'login' | 'cadastro' | 'logado'
@@ -119,13 +120,16 @@ function App() {
         </div>
         {restauranteSelecionado !== null && (
           <main className="min-h-screen bg-brand-cream p-8 lg:grid lg:grid-cols-[minmax(0,2fr)_minmax(18rem,1fr)] lg:content-start lg:gap-x-8">
-            <button
-              type="button"
-              onClick={() => setRestauranteSelecionado(null)}
-              className="mb-8 rounded px-3 py-2 text-sm font-medium text-brand-tomato hover:bg-brand-tomato/10 lg:col-span-2"
-            >
-              Voltar aos resultados
-            </button>
+            <header className="mb-8 flex items-start justify-between gap-4 lg:col-span-2">
+              <BrandLogo />
+              <button
+                type="button"
+                onClick={() => setRestauranteSelecionado(null)}
+                className="rounded px-3 py-2 text-sm font-medium text-brand-tomato hover:bg-brand-tomato/10"
+              >
+                Voltar aos resultados
+              </button>
+            </header>
             <h1 className="text-3xl font-bold text-brand-brown lg:col-span-2">
               {restauranteSelecionado.nome}
             </h1>

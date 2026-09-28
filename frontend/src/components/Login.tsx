@@ -34,14 +34,14 @@ function Login({ onIrParaCadastro, onLoginSucesso }: LoginProps) {
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-brand-cream p-4">
+    <main className="relative flex min-h-screen items-center justify-center bg-brand-cream p-4">
+      <header className="absolute left-8 top-8">
+        <BrandLogo showTagline />
+      </header>
       <form
         onSubmit={entrar}
         className="w-full max-w-sm rounded-xl border border-brand-brown/10 bg-brand-cream p-6 shadow-lg"
       >
-        <div className="mb-6 flex justify-center">
-          <BrandLogo />
-        </div>
         <p className="mb-4 text-center text-sm text-zinc-500">Entrar</p>
 
         <label className="mb-1 block text-sm" htmlFor="email">

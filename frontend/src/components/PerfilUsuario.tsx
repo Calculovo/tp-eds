@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import ListaRelacoes from './ListaRelacoes'
+import BrandLogo from './BrandLogo'
 
 type Review = {
   id: number
@@ -68,7 +69,10 @@ function PerfilUsuario({
 
   return (
     <main className="min-h-screen bg-brand-cream p-8">
-      <button type="button" onClick={onVoltar} className="mb-8 rounded px-3 py-2 text-sm font-medium text-brand-tomato hover:bg-brand-tomato/10">Voltar</button>
+      <header className="mb-8 flex items-start justify-between gap-4">
+        <BrandLogo />
+        <button type="button" onClick={onVoltar} className="rounded px-3 py-2 text-sm font-medium text-brand-tomato hover:bg-brand-tomato/10">Voltar</button>
+      </header>
       {carregando && <p className="text-sm text-zinc-600">Carregando perfil...</p>}
       {erro && <p role="alert" className="text-sm text-brand-tomato">{erro}</p>}
       {perfil && (

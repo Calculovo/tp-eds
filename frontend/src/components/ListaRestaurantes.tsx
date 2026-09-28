@@ -94,7 +94,7 @@ function ListaRestaurantes({
     <main className="min-h-screen bg-brand-cream p-8">
       <header className="mb-8 flex items-center justify-between">
         <div>
-          <BrandLogo compact />
+          <BrandLogo />
           <p className="text-sm text-zinc-600">Olá, {email}</p>
         </div>
         <nav className="flex items-center gap-2">

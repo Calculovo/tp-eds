@@ -1,5 +1,6 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import BuscaUsuarios from './BuscaUsuarios'
+import BrandLogo from './BrandLogo'
 
 type ListaRestaurantesProps = {
   email: string
@@ -90,10 +91,10 @@ function ListaRestaurantes({
   }
 
   return (
-    <main className="min-h-screen bg-zinc-100 p-8">
+    <main className="min-h-screen bg-brand-cream p-8">
       <header className="mb-8 flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">RestauranK</h1>
+          <BrandLogo compact />
           <p className="text-sm text-zinc-600">Olá, {email}</p>
         </div>
         <nav className="flex items-center gap-2">
@@ -101,14 +102,14 @@ function ListaRestaurantes({
             type="button"
             onClick={() => viewerId !== null && onSelecionarUsuario(viewerId)}
             disabled={viewerId === null}
-            className="rounded border border-emerald-700 px-3 py-1 text-sm font-medium text-emerald-800 hover:bg-emerald-50 disabled:opacity-60"
+            className="rounded border border-brand-tomato px-3 py-1 text-sm font-medium text-brand-tomato hover:bg-brand-tomato/10 disabled:opacity-60"
           >
             Meu perfil
           </button>
           <button
             type="button"
             onClick={onLogout}
-            className="rounded bg-red-500 px-3 py-1 text-sm text-white hover:bg-red-600"
+            className="rounded bg-brand-brown px-3 py-1 text-sm text-white hover:bg-brand-tomato"
           >
             Sair
           </button>
@@ -133,13 +134,13 @@ function ListaRestaurantes({
         <button
           type="submit"
           disabled={carregando}
-          className="rounded bg-emerald-700 px-4 py-2 font-medium text-white hover:bg-emerald-800 disabled:opacity-60"
+          className="rounded bg-brand-tomato px-4 py-2 font-medium text-white hover:bg-brand-brown disabled:opacity-60"
         >
           {carregando ? 'Buscando...' : 'Buscar'}
         </button>
       </form>
 
-      {erro && <p role="alert" className="mb-4 text-sm text-red-700">{erro}</p>}
+      {erro && <p role="alert" className="mb-4 text-sm text-brand-tomato">{erro}</p>}
       {!erro && !carregando && restaurantes.length === 0 && (
         <p className="mb-4 text-sm text-zinc-600">Nenhum restaurante encontrado.</p>
       )}
@@ -150,7 +151,7 @@ function ListaRestaurantes({
             key={restaurante.id}
             type="button"
             onClick={() => onSelecionarRestaurante(restaurante)}
-            className="rounded-lg border border-zinc-200 bg-white p-4 text-left shadow-md transition hover:border-emerald-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700"
+            className="rounded-lg border border-zinc-200 bg-white p-4 text-left shadow-md transition hover:border-brand-tomato focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-tomato"
           >
             {restaurante.imagem && (
               <img
@@ -159,7 +160,7 @@ function ListaRestaurantes({
                 className="mb-3 h-40 w-full rounded-md object-cover"
               />
             )}
-            <h2 className="text-xl font-semibold text-zinc-800">
+            <h2 className="text-xl font-semibold text-brand-brown">
               {restaurante.nome}
             </h2>
             <p className="text-sm text-zinc-500">{restaurante.categoria}</p>

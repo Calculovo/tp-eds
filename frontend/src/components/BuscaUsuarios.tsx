@@ -51,7 +51,7 @@ function BuscaUsuarios({ onSelecionarUsuario }: BuscaUsuariosProps) {
 
   return (
     <section className="mb-8 rounded-lg border border-zinc-200 bg-white p-4">
-      <h2 className="mb-3 text-lg font-semibold text-zinc-900">Buscar usuários</h2>
+      <h2 className="mb-3 text-lg font-semibold text-brand-brown">Buscar usuários</h2>
       <form onSubmit={enviarBusca} className="flex gap-2">
         <input
           type="search"
@@ -64,18 +64,18 @@ function BuscaUsuarios({ onSelecionarUsuario }: BuscaUsuariosProps) {
           aria-label="Nome do usuário"
           className="min-w-0 flex-1 rounded border border-zinc-300 bg-white px-3 py-2"
         />
-        <button type="submit" disabled={carregando} className="rounded bg-emerald-700 px-4 py-2 font-medium text-white hover:bg-emerald-800 disabled:opacity-60">
+        <button type="submit" disabled={carregando} className="rounded bg-brand-tomato px-4 py-2 font-medium text-white hover:bg-brand-brown disabled:opacity-60">
           {carregando ? 'Buscando...' : 'Buscar'}
         </button>
       </form>
-      {erro && <p role="alert" className="mt-3 text-sm text-red-700">{erro}</p>}
+      {erro && <p role="alert" className="mt-3 text-sm text-brand-tomato">{erro}</p>}
       {consulta && !carregando && !erro && usuarios.length === 0 && (
         <p className="mt-3 text-sm text-zinc-600">Nenhum usuário encontrado.</p>
       )}
       <ul className="mt-3 divide-y divide-zinc-100">
         {usuarios.map((usuario) => (
           <li key={usuario.id}>
-            <button type="button" onClick={() => onSelecionarUsuario(usuario.id)} className="flex w-full items-center justify-between py-2 text-left hover:text-emerald-800">
+            <button type="button" onClick={() => onSelecionarUsuario(usuario.id)} className="flex w-full items-center justify-between py-2 text-left hover:text-brand-tomato">
               <span className="font-medium">{usuario.username}</span>
               <span className="text-sm text-zinc-500">{usuario.review_count} reviews</span>
             </button>

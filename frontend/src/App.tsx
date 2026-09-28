@@ -118,15 +118,15 @@ function App() {
           />
         </div>
         {restauranteSelecionado !== null && (
-          <main className="min-h-screen bg-zinc-100 p-8 lg:grid lg:grid-cols-[minmax(0,2fr)_minmax(18rem,1fr)] lg:content-start lg:gap-x-8">
+          <main className="min-h-screen bg-brand-cream p-8 lg:grid lg:grid-cols-[minmax(0,2fr)_minmax(18rem,1fr)] lg:content-start lg:gap-x-8">
             <button
               type="button"
               onClick={() => setRestauranteSelecionado(null)}
-              className="mb-8 rounded px-3 py-2 text-sm font-medium text-emerald-800 hover:bg-emerald-50 lg:col-span-2"
+              className="mb-8 rounded px-3 py-2 text-sm font-medium text-brand-tomato hover:bg-brand-tomato/10 lg:col-span-2"
             >
               Voltar aos resultados
             </button>
-            <h1 className="text-3xl font-bold text-zinc-900 lg:col-span-2">
+            <h1 className="text-3xl font-bold text-brand-brown lg:col-span-2">
               {restauranteSelecionado.nome}
             </h1>
             <div className="mt-8 max-w-2xl lg:contents">
@@ -149,7 +149,7 @@ function App() {
               >
                 <h2
                   id="distribuicao-titulo"
-                  className="text-xl font-semibold text-zinc-900"
+                  className="text-xl font-semibold text-brand-brown"
                 >
                   Avaliações por estrelas
                 </h2>
@@ -184,7 +184,7 @@ function App() {
                             className="h-2 overflow-hidden rounded-sm bg-zinc-200"
                           >
                             <div
-                              className="h-full bg-emerald-700"
+                              className="h-full bg-brand-tomato"
                               style={{ width: `${largura}%` }}
                             />
                           </div>
@@ -207,12 +207,12 @@ function App() {
               aria-labelledby="comentarios-titulo"
               className="mt-8 min-w-0 lg:col-start-2 lg:row-start-3"
             >
-              <h2 id="comentarios-titulo" className="text-xl font-semibold text-zinc-900">
+              <h2 id="comentarios-titulo" className="text-xl font-semibold text-brand-brown">
                 Comentários
               </h2>
               <div className="mt-4 max-h-[65vh] overflow-y-auto pr-2">
                 {carregandoAvaliacoes && <p className="text-sm text-zinc-600">Carregando...</p>}
-                {erroAvaliacoes && <p role="alert" className="text-sm text-red-700">{erroAvaliacoes}</p>}
+                {erroAvaliacoes && <p role="alert" className="text-sm text-brand-tomato">{erroAvaliacoes}</p>}
                 {!carregandoAvaliacoes && !erroAvaliacoes && avaliacoes.length === 0 && (
                   <p className="text-sm text-zinc-600">Ainda não há comentários.</p>
                 )}
@@ -222,7 +222,7 @@ function App() {
                       <button
                         type="button"
                         onClick={() => setUsuarioSelecionado(avaliacao.user_id)}
-                        className="break-all text-left text-sm font-medium text-emerald-800 hover:underline"
+                        className="break-all text-left text-sm font-medium text-brand-tomato hover:text-brand-brown hover:underline"
                       >
                         {avaliacao.username}
                       </button>

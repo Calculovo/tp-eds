@@ -35,15 +35,15 @@ function ListaRelacoes({
   return (
     <section className="mb-8 rounded-lg border border-zinc-200 bg-white p-4">
       <div className="mb-3 flex items-center justify-between">
-        <h2 className="text-lg font-semibold text-zinc-900">
+        <h2 className="text-lg font-semibold text-brand-brown">
           {tipo === 'followers' ? 'Seguidores' : 'Seguindo'}
         </h2>
-        <button type="button" onClick={aoFechar} className="text-sm text-emerald-800 hover:underline">
+        <button type="button" onClick={aoFechar} className="text-sm text-brand-tomato hover:underline">
           Fechar
         </button>
       </div>
       {carregando && <p className="text-sm text-zinc-600">Carregando...</p>}
-      {erro && <p role="alert" className="text-sm text-red-700">Não foi possível carregar esta lista.</p>}
+      {erro && <p role="alert" className="text-sm text-brand-tomato">Não foi possível carregar esta lista.</p>}
       {!carregando && !erro && usuarios.length === 0 && (
         <p className="text-sm text-zinc-600">Nenhum usuário nesta lista.</p>
       )}
@@ -53,7 +53,7 @@ function ListaRelacoes({
             <button
               type="button"
               onClick={() => aoSelecionarUsuario(usuario.id)}
-              className="w-full py-2 text-left font-medium text-emerald-800 hover:underline"
+              className="w-full py-2 text-left font-medium text-brand-tomato hover:text-brand-brown hover:underline"
             >
               {usuario.username}
             </button>

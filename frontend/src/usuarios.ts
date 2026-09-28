@@ -2,6 +2,8 @@
 const CHAVE = 'restaurank-usuarios'
 
 export type Usuario = {
+  nome: string
+  sobrenome: string
   email: string
   senha: string
 }
@@ -16,7 +18,7 @@ export function lerUsuarios(): Usuario[] {
 }
 
 // Cadastra um usuário novo. Devolve uma mensagem de erro ou null se deu certo.
-export function cadastrarUsuario(email: string, senha: string): string | null {
+export function cadastrarUsuario(nome: string, sobrenome: string, email: string, senha: string): string | null {
   const usuarios = lerUsuarios()
   const jaExiste = usuarios.some(
     (usuario) => usuario.email.toLowerCase() === email.toLowerCase(),
@@ -26,7 +28,7 @@ export function cadastrarUsuario(email: string, senha: string): string | null {
     return 'Este e-mail já está cadastrado.'
   }
 
-  usuarios.push({ email, senha })
+  usuarios.push({nome, sobrenome, email, senha })
   localStorage.setItem(CHAVE, JSON.stringify(usuarios))
   return null
 }

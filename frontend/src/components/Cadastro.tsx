@@ -7,6 +7,8 @@ type CadastroProps = {
 }
 
 function Cadastro({ onIrParaLogin }: CadastroProps) {
+  const [nome, setNome] = useState('')
+  const [sobrenome, setSobrenome] = useState('')
   const [email, setEmail] = useState('')
   const [senha, setSenha] = useState('')
   const [erro, setErro] = useState('')
@@ -15,7 +17,7 @@ function Cadastro({ onIrParaLogin }: CadastroProps) {
     evento.preventDefault()
 
     // Salva o usuário no localStorage (só no navegador, some se limpar os dados).
-    const mensagemErro = cadastrarUsuario(email, senha)
+    const mensagemErro = cadastrarUsuario(nome, sobrenome, email, senha)
     if (mensagemErro) {
       setErro(mensagemErro)
       return
@@ -34,6 +36,35 @@ function Cadastro({ onIrParaLogin }: CadastroProps) {
         className="w-full max-w-sm rounded-xl border border-brand-brown/10 bg-brand-cream p-6 shadow-lg"
       >
         <p className="mb-4 text-center text-sm text-zinc-500">Criar conta</p>
+
+        <div className="mb-4 flex gap-3">
+          <div className="flex-1">
+            <label className="mb-1 block text-sm" htmlFor="cadastro-nome">
+              Nome
+            </label>
+            <input
+              id="cadastro-nome"
+              type="text"
+              value={nome}
+              onChange={(e) => setNome(e.target.value)}
+              className="w-full rounded border px-3 py-2"
+              required
+            />
+          </div>
+          <div className="flex-1">
+            <label className="mb-1 block text-sm" htmlFor="cadastro-sobrenome">
+              Sobrenome
+            </label>
+            <input
+              id="cadastro-sobrenome"
+              type="text"
+              value={sobrenome}
+              onChange={(e) => setSobrenome(e.target.value)}
+              className="w-full rounded border px-3 py-2"
+              required
+            />
+          </div>
+        </div>
 
         <label className="mb-1 block text-sm" htmlFor="cadastro-email">
           E-mail

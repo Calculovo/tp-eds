@@ -170,27 +170,45 @@ function App() {
           />
         </div>
         {restauranteSelecionado !== null && (
-          <main className="min-h-screen bg-brand-cream p-8 lg:grid lg:grid-cols-[minmax(0,2fr)_minmax(18rem,1fr)] lg:content-start lg:gap-x-8">
+          <main className="mx-auto min-h-screen max-w-7xl bg-brand-cream p-5 sm:p-8 lg:grid lg:grid-cols-[minmax(0,1.05fr)_minmax(20rem,0.95fr)] lg:content-start lg:gap-x-10">
             <header className="mb-8 flex items-start justify-between gap-4 lg:col-span-2">
               <BrandLogo />
               <button
                 type="button"
                 onClick={() => setRestauranteSelecionado(null)}
-                className="rounded px-3 py-2 text-sm font-medium text-brand-tomato hover:bg-brand-tomato/10"
+                className="rounded-lg px-3 py-2 text-sm font-medium text-brand-tomato transition hover:bg-brand-tomato/10"
               >
                 Voltar aos resultados
               </button>
             </header>
-            <h1 className="text-3xl font-bold text-brand-brown lg:col-span-2">
-              {restauranteSelecionado.nome}
-            </h1>
-            <div className="mt-8 max-w-2xl lg:contents">
-              <div className="aspect-[16/9] overflow-hidden rounded border border-zinc-200 bg-white">
+            <section className="mb-2 lg:col-span-2">
+              <p className="mb-2 text-sm font-semibold uppercase tracking-[0.18em] text-brand-tomato">
+                {restauranteSelecionado.categoria}
+              </p>
+              <div className="flex flex-wrap items-end gap-x-5 gap-y-2">
+                <h1 className="text-4xl font-extrabold tracking-tight text-brand-brown sm:text-5xl">
+                  {restauranteSelecionado.nome}
+                </h1>
+                {restauranteSelecionado.mediaAvaliacoes !== null && (
+                  <p className="mb-1 rounded-full bg-white px-3 py-1.5 text-sm font-bold text-amber-600 shadow-sm">
+                    ★ {restauranteSelecionado.mediaAvaliacoes.toFixed(1)}
+                    <span className="ml-1 font-medium text-zinc-500">
+                      ({restauranteSelecionado.quantidadeAvaliacoes}{' '}
+                      {restauranteSelecionado.quantidadeAvaliacoes === 1
+                        ? 'avaliação'
+                        : 'avaliações'})
+                    </span>
+                  </p>
+                )}
+              </div>
+            </section>
+            <div className="min-w-0">
+              <div className="flex h-56 items-center justify-center overflow-hidden rounded-2xl border border-zinc-200 bg-white p-3 shadow-sm sm:h-72 lg:h-[22rem]">
                 {restauranteSelecionado.imagem ? (
                   <img
                     src={restauranteSelecionado.imagem}
                     alt={restauranteSelecionado.nome}
-                    className="h-full w-full object-cover"
+                    className="h-full w-full rounded-xl object-contain"
                   />
                 ) : (
                   <div className="flex h-full items-center justify-center text-sm text-zinc-500">
@@ -200,7 +218,7 @@ function App() {
               </div>
               <section
                 aria-labelledby="distribuicao-titulo"
-                className="mt-6 max-w-lg lg:col-start-1 lg:row-start-4"
+                className="mt-6 rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm"
               >
                 <h2
                   id="distribuicao-titulo"
@@ -260,11 +278,16 @@ function App() {
             </div>
             <section
               aria-labelledby="comentarios-titulo"
-              className="mt-8 min-w-0 lg:col-start-2 lg:row-start-3"
+              className="mt-8 min-w-0 rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm lg:mt-0"
             >
-              <h2 id="comentarios-titulo" className="text-xl font-semibold text-brand-brown">
-                Comentários
-              </h2>
+              <div className="flex items-center justify-between gap-3">
+                <h2 id="comentarios-titulo" className="text-xl font-semibold text-brand-brown">
+                  Comentários
+                </h2>
+                <span className="rounded-full bg-brand-cream px-3 py-1 text-xs font-medium text-zinc-600">
+                  {avaliacoes.length}
+                </span>
+              </div>
               <div className="mt-4 max-h-[65vh] overflow-y-auto pr-2">
                 {carregandoAvaliacoes && <p className="text-sm text-zinc-600">Carregando...</p>}
                 {erroAvaliacoes && <p role="alert" className="text-sm text-brand-tomato">{erroAvaliacoes}</p>}

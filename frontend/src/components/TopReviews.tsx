@@ -9,7 +9,6 @@ type ReviewDestaque = {
   comment: string
   helpful_votes: number
   unhelpful_votes: number
-  score: number
 }
 
 type TopReviewsProps = {
@@ -75,18 +74,6 @@ function TopReviews({ onSelecionarUsuario }: TopReviewsProps) {
                     {review.username}
                   </button>
                 </div>
-                <span
-                  className={`shrink-0 rounded-full px-2.5 py-1 text-sm font-bold ${
-                    review.score > 0
-                      ? 'bg-green-50 text-green-700'
-                      : review.score < 0
-                        ? 'bg-red-50 text-brand-tomato'
-                        : 'bg-zinc-100 text-zinc-600'
-                  }`}
-                  aria-label={`Pontuação ${review.score}`}
-                >
-                  P {review.score > 0 ? '+' : ''}{review.score}
-                </span>
               </div>
               <div className="mt-2 flex items-center gap-2 text-sm">
                 <span className="font-semibold text-amber-600">

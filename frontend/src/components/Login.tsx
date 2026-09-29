@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react'
-import { validarLogin } from '../usuarios'
+import { validarLogin, redefinirSenha } from '../usuarios'
 import BrandLogo from './BrandLogo'
 
 type LoginProps = {
@@ -12,6 +12,8 @@ function Login({ onIrParaCadastro, onLoginSucesso }: LoginProps) {
   const [senha, setSenha] = useState('')
   const [erro, setErro] = useState('')
   const [carregando, setCarregando] = useState(false)
+  const [sucesso, setSucesso] = useState('')
+  const [modoRecuperacao, setModoRecuperacao] = useState(false)
 
   async function entrar(evento: FormEvent) {
     evento.preventDefault()
@@ -33,16 +35,36 @@ function Login({ onIrParaCadastro, onLoginSucesso }: LoginProps) {
     }
   }
 
+  async function recuperar(evento: FormEvent) {
+    evento.preventDefault()
+    setCarregando(true)
+    setErro('')
+    setSucesso('')
+
+    const mensagemErro = await redefinirSenha(email, senha)
+    
+    if (mensagemErro) {
+      setErro(mensagemErro)
+    } else {
+      setSucesso('Senha alterada com sucesso! Agora você pode entrar.')
+      setModoRecuperacao(false)
+      setSenha('') // Limpa a senha por segurança
+    }
+    setCarregando(false)
+  }
+
   return (
     <main className="relative flex min-h-screen items-center justify-center bg-brand-cream p-4">
       <header className="absolute left-8 top-8">
         <BrandLogo showTagline />
       </header>
       <form
-        onSubmit={entrar}
+        onSubmit={modoRecuperacao ? recuperar : entrar}
         className="w-full max-w-sm rounded-xl border border-brand-brown/10 bg-brand-cream p-6 shadow-lg"
       >
-        <p className="mb-4 text-center text-sm text-zinc-500">Entrar</p>
+        <p className="mb-4 text-center text-sm text-zinc-500">
+          {modoRecuperacao ? 'Redefinir Senha' : 'Entrar'}
+        </p>
 
         <label className="mb-1 block text-sm" htmlFor="email">
           E-mail
@@ -70,13 +92,43 @@ function Login({ onIrParaCadastro, onLoginSucesso }: LoginProps) {
 
         {erro && <p className="mb-4 text-sm text-brand-tomato">{erro}</p>}
 
-        <button
-          type="submit"
-          disabled={carregando}
-          className="w-full rounded bg-brand-tomato py-2 font-medium text-white hover:bg-brand-brown"
-        >
-          {carregando ? 'Conectando...' : 'Entrar'}
-        </button>
+        {sucesso && <p className="mb-4 text-sm text-green-600">{sucesso}</p>}
+
+<button
+  type="submit"
+  disabled={carregando}
+  className="w-full rounded bg-brand-tomato py-2 font-medium text-white hover:bg-brand-brown"
+>
+  {carregando ? 'Aguarde...' : (modoRecuperacao ? 'Salvar Nova Senha' : 'Entrar')}
+</button>
+
+{!modoRecuperacao && (
+  <button
+    type="button"
+    onClick={() => {
+      setModoRecuperacao(true)
+      setErro('')
+      setSucesso('')
+    }}
+    className="mt-4 w-full text-sm text-zinc-600 underline"
+  >
+    Esqueci minha senha
+  </button>
+)}
+
+{modoRecuperacao && (
+          <button
+            type="button"
+            onClick={() => {
+              setModoRecuperacao(false)
+              setErro('')
+              setSucesso('')
+            }}
+            className="mt-4 w-full text-sm text-zinc-600 underline"
+          >
+            Voltar para o login
+          </button>
+        )}
 
         <button
           type="button"

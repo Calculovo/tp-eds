@@ -44,6 +44,10 @@ def ensure_schema(conn: psycopg.Connection) -> None:
         cur.execute(
             "ALTER TABLE users ADD COLUMN IF NOT EXISTS username VARCHAR(50)"
         )
+
+        cur.execute(
+            "ALTER TABLE users ADD COLUMN IF NOT EXISTS password VARCHAR(255)"
+        )
         cur.execute("SELECT id, email FROM users WHERE username IS NULL")
         for user_id, email in cur.fetchall():
             username = _unique_username(cur, _username_from_email(email))

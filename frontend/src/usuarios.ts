@@ -42,3 +42,36 @@ export function validarLogin(email: string, senha: string): boolean {
       usuario.senha === senha,
   )
 }
+
+// Redefine a senha localmente e envia a atualização para o servidor.
+export async function redefinirSenha(email: string, novaSenha: string): Promise<string | null> {
+  const usuarios = lerUsuarios()
+  const index = usuarios.findIndex(
+    (usuario) => usuario.email.toLowerCase() === email.toLowerCase()
+  )
+
+  if (index === -1) {
+    return 'E-mail não encontrado. Verifique se digitou corretamente.'
+  }
+
+  // 1. Atualiza no armazenamento local
+  usuarios[index].senha = novaSenha
+  localStorage.setItem(CHAVE, JSON.stringify(usuarios))
+
+  // 2. Atualiza no servidor (backend)
+  try {
+    const resposta = await fetch('/api/users/reset-password', {
+      method: 'PATCH', // ou POST/PUT dependendo de como configurou o seu backend
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, novaSenha }),
+    })
+
+    if (!resposta.ok) {
+      console.warn('A senha foi alterada localmente, mas houve um erro no servidor.')
+    }
+  } catch (erro) {
+    console.error('Falha ao comunicar com o servidor:', erro)
+  }
+
+  return null // null significa que não houve erro impeditivo
+}

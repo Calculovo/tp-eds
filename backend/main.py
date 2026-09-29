@@ -27,6 +27,10 @@ class VoteIn(BaseModel):
 class UserIn(BaseModel):
     email: EmailStr
 
+class ResetPasswordIn(BaseModel):
+    email: EmailStr
+    novaSenha: str
+
 def _list_user_reviews(
     cur,
     user_id: int,
@@ -453,3 +457,26 @@ def unfollow_user(user_id: int, follower_id: int = Query()) -> dict:
                 (follower_id, user_id),
             )
             return {"ok": True}
+
+@app.patch("/users/reset-password")
+def reset_password(payload: ResetPasswordIn) -> dict:
+    with connect() as conn:
+        with conn.cursor() as cur:
+            # Tenta atualizar a senha do usuário com base no e-mail
+            cur.execute(
+                """
+                UPDATE users 
+                SET password = %s 
+                WHERE email = %s 
+                RETURNING id
+                """,
+                (payload.novaSenha, str(payload.email)),
+            )
+            
+            # Se não retornar nenhum ID, significa que o e-mail não existe no banco
+            if cur.fetchone() is None:
+                raise HTTPException(status_code=404, detail="Usuário não encontrado no servidor.")
+            
+            conn.commit()
+            
+    return {"status": "ok", "message": "Senha atualizada com sucesso no banco de dados."}

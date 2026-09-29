@@ -9,6 +9,7 @@ type NavegacaoLogadaProps = {
   onBuscaRestauranteChange: (value: string) => void
   onBuscarRestaurante: (value: string) => void
   onSelecionarUsuario: (userId: number) => void
+  onIrParaInicio: () => void
   onMeuPerfil: () => void
   onLogout: () => void
 }
@@ -20,6 +21,7 @@ function NavegacaoLogada({
   onBuscaRestauranteChange,
   onBuscarRestaurante,
   onSelecionarUsuario,
+  onIrParaInicio,
   onMeuPerfil,
   onLogout,
 }: NavegacaoLogadaProps) {
@@ -32,7 +34,15 @@ function NavegacaoLogada({
     <header className="sticky top-0 z-50 border-b border-brand-brown/10 bg-brand-cream/95 px-4 py-3 shadow-sm backdrop-blur">
       <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-3">
         <div className="mr-auto">
-          <BrandLogo />
+          <button
+            type="button"
+            onClick={onIrParaInicio}
+            aria-label="Ir para a página inicial"
+            title="Página inicial"
+            className="rounded focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand-tomato"
+          >
+            <BrandLogo />
+          </button>
         </div>
         <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto sm:flex-nowrap">
           <BuscaUsuarios onSelecionarUsuario={onSelecionarUsuario} />

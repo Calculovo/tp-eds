@@ -321,13 +321,6 @@ function App() {
                       </span>
                     </p>
                   )}
-                  <button
-                    type="button"
-                    onClick={() => setAvaliandoRestaurante(true)}
-                    className="rounded-lg bg-brand-tomato px-4 py-2 text-sm font-semibold text-white transition hover:bg-brand-brown"
-                  >
-                    Avaliar
-                  </button>
                 </div>
               </div>
             </section>
@@ -345,6 +338,14 @@ function App() {
                   </div>
                 )}
               </div>
+              <button
+                type="button"
+                onClick={() => setAvaliandoRestaurante(true)}
+                className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-brand-tomato px-5 py-3 text-base font-bold text-white shadow-md transition hover:bg-brand-brown focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-tomato"
+              >
+                <span aria-hidden="true">✎</span>
+                Avaliar este restaurante
+              </button>
               <section
                 aria-labelledby="distribuicao-titulo"
                 className="mt-6 rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm"

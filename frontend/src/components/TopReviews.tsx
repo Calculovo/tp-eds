@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import BotoesVotoReview from './BotoesVotoReview'
 
 type ReviewDestaque = {
   id: number
@@ -9,20 +10,25 @@ type ReviewDestaque = {
   comment: string
   helpful_votes: number
   unhelpful_votes: number
+  viewer_vote: boolean | null
 }
 
 type TopReviewsProps = {
+  email: string
+  viewerId: number | null
   onSelecionarUsuario: (userId: number) => void
 }
 
-function TopReviews({ onSelecionarUsuario }: TopReviewsProps) {
+function TopReviews({ email, viewerId, onSelecionarUsuario }: TopReviewsProps) {
   const [reviews, setReviews] = useState<ReviewDestaque[]>([])
   const [carregando, setCarregando] = useState(true)
   const [erro, setErro] = useState('')
+  const [atualizacao, setAtualizacao] = useState(0)
 
   useEffect(() => {
     let ativa = true
-    fetch('/api/reviews/top')
+    const viewer = viewerId === null ? '' : `?viewer_id=${viewerId}`
+    fetch(`/api/reviews/top${viewer}`)
       .then((resposta) => {
         if (!resposta.ok) throw new Error('Não foi possível carregar o top 5.')
         return resposta.json() as Promise<ReviewDestaque[]>
@@ -40,7 +46,29 @@ function TopReviews({ onSelecionarUsuario }: TopReviewsProps) {
     return () => {
       ativa = false
     }
-  }, [])
+  }, [viewerId, atualizacao])
+
+  function atualizarVoto(reviewId: number, isHelpful: boolean) {
+    setReviews((atuais) =>
+      atuais.map((review) => {
+        if (review.id !== reviewId) return review
+        const votoAnterior = review.viewer_vote
+        return {
+          ...review,
+          helpful_votes:
+            review.helpful_votes +
+            Number(isHelpful) -
+            Number(votoAnterior === true),
+          unhelpful_votes:
+            review.unhelpful_votes +
+            Number(!isHelpful) -
+            Number(votoAnterior === false),
+          viewer_vote: isHelpful,
+        }
+      }),
+    )
+    setAtualizacao((atual) => atual + 1)
+  }
 
   return (
     <section aria-labelledby="top-reviews-titulo">
@@ -86,6 +114,14 @@ function TopReviews({ onSelecionarUsuario }: TopReviewsProps) {
               <p className="mt-3 whitespace-pre-wrap text-sm leading-6 text-zinc-700">
                 {review.comment}
               </p>
+              <BotoesVotoReview
+                reviewId={review.id}
+                email={email}
+                helpfulVotes={review.helpful_votes}
+                unhelpfulVotes={review.unhelpful_votes}
+                viewerVote={review.viewer_vote}
+                onVotoRegistrado={atualizarVoto}
+              />
             </article>
           </li>
         ))}

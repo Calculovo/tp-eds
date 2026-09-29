@@ -194,7 +194,11 @@ function ListaRestaurantes({
             ))}
           </div>
         </section>
-        <TopReviews onSelecionarUsuario={onSelecionarUsuario} />
+        <TopReviews
+          email={email}
+          viewerId={viewerId}
+          onSelecionarUsuario={onSelecionarUsuario}
+        />
       </div>
     </main>
   )

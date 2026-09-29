@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import ListaRelacoes from './ListaRelacoes'
 import BrandLogo from './BrandLogo'
+import BotoesVotoReview from './BotoesVotoReview'
 
 type Review = {
   id: number
@@ -8,6 +9,9 @@ type Review = {
   restaurant_image_url: string | null
   rating: number
   comment: string | null
+  helpful_votes: number
+  unhelpful_votes: number
+  viewer_vote: boolean | null
 }
 
 type Perfil = {
@@ -22,6 +26,7 @@ type Perfil = {
 type PerfilUsuarioProps = {
   userId: number
   viewerId: number | null
+  email: string
   onVoltar: () => void
   onSelecionarUsuario: (userId: number) => void
 }
@@ -29,6 +34,7 @@ type PerfilUsuarioProps = {
 function PerfilUsuario({
   userId,
   viewerId,
+  email,
   onVoltar,
   onSelecionarUsuario,
 }: PerfilUsuarioProps) {
@@ -65,6 +71,31 @@ function PerfilUsuario({
     if (!resposta.ok) return
     const delta = perfil.is_following ? -1 : 1
     setPerfil({ ...perfil, is_following: !perfil.is_following, followers_count: perfil.followers_count + delta })
+  }
+
+  function atualizarVoto(reviewId: number, isHelpful: boolean) {
+    setPerfil((atual) => {
+      if (atual === null) return atual
+      return {
+        ...atual,
+        reviews: atual.reviews.map((review) => {
+          if (review.id !== reviewId) return review
+          const votoAnterior = review.viewer_vote
+          return {
+            ...review,
+            helpful_votes:
+              review.helpful_votes +
+              Number(isHelpful) -
+              Number(votoAnterior === true),
+            unhelpful_votes:
+              review.unhelpful_votes +
+              Number(!isHelpful) -
+              Number(votoAnterior === false),
+            viewer_vote: isHelpful,
+          }
+        }),
+      }
+    })
   }
 
   return (
@@ -151,6 +182,14 @@ function PerfilUsuario({
                   <p className="font-semibold text-brand-brown">{review.restaurant_name}</p>
                   <p className="text-sm font-semibold text-amber-600">★ {review.rating.toFixed(1)}</p>
                   {review.comment && <p className="mt-2 text-sm text-zinc-700">{review.comment}</p>}
+                  <BotoesVotoReview
+                    reviewId={review.id}
+                    email={email}
+                    helpfulVotes={review.helpful_votes}
+                    unhelpfulVotes={review.unhelpful_votes}
+                    viewerVote={review.viewer_vote}
+                    onVotoRegistrado={atualizarVoto}
+                  />
                 </div>
               </li>
             ))}

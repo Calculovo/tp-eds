@@ -123,32 +123,36 @@ function ListaRestaurantes({
 
       <BuscaUsuarios onSelecionarUsuario={onSelecionarUsuario} />
 
-      <form onSubmit={buscarRestaurantes} className="mb-8 flex gap-2">
-        <input
-          type="search"
-          value={nomeBusca}
-          onChange={(event) => {
-            const valor = event.target.value
-            setNomeBusca(valor)
-            if (!valor.trim()) setConsulta('')
-          }}
-          placeholder="Buscar restaurante por nome"
-          aria-label="Nome do restaurante"
-          className="min-w-0 flex-1 rounded border border-zinc-300 bg-white px-3 py-2"
-        />
-        <button
-          type="submit"
-          disabled={carregando}
-          className="rounded bg-brand-tomato px-4 py-2 font-medium text-white hover:bg-brand-brown disabled:opacity-60"
-        >
-          {carregando ? 'Buscando...' : 'Buscar'}
-        </button>
-      </form>
-
-      {erro && <p role="alert" className="mb-4 text-sm text-brand-tomato">{erro}</p>}
-      {!erro && !carregando && restaurantes.length === 0 && (
-        <p className="mb-4 text-sm text-zinc-600">Nenhum restaurante encontrado.</p>
-      )}
+      <section className="mb-8 rounded-lg border border-zinc-200 bg-white p-4">
+        <h2 className="mb-3 text-lg font-semibold text-brand-brown">
+          Buscar restaurantes
+        </h2>
+        <form onSubmit={buscarRestaurantes} className="flex gap-2">
+          <input
+            type="search"
+            value={nomeBusca}
+            onChange={(event) => {
+              const valor = event.target.value
+              setNomeBusca(valor)
+              if (!valor.trim()) setConsulta('')
+            }}
+            placeholder="Buscar restaurante por nome"
+            aria-label="Nome do restaurante"
+            className="min-w-0 flex-1 rounded border border-zinc-300 bg-white px-3 py-2"
+          />
+          <button
+            type="submit"
+            disabled={carregando}
+            className="rounded bg-brand-tomato px-4 py-2 font-medium text-white hover:bg-brand-brown disabled:opacity-60"
+          >
+            {carregando ? 'Buscando...' : 'Buscar'}
+          </button>
+        </form>
+        {erro && <p role="alert" className="mt-3 text-sm text-brand-tomato">{erro}</p>}
+        {consulta && !carregando && !erro && restaurantes.length === 0 && (
+          <p className="mt-3 text-sm text-zinc-600">Nenhum restaurante encontrado.</p>
+        )}
+      </section>
 
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
         {restaurantes.map((restaurante) => (

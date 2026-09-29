@@ -4,8 +4,8 @@ import ListaRestaurantes, {
   type Restaurante,
 } from './components/ListaRestaurantes'
 import Login from './components/Login'
+import NavegacaoLogada from './components/NavegacaoLogada'
 import PerfilUsuario from './components/PerfilUsuario'
-import BrandLogo from './components/BrandLogo'
 import BotoesVotoReview from './components/BotoesVotoReview'
 
 // As 3 telas possíveis do app nesta simulação.
@@ -31,6 +31,8 @@ function App() {
   const [restauranteSelecionado, setRestauranteSelecionado] =
     useState<Restaurante | null>(null)
   const [perfilParaVoltar, setPerfilParaVoltar] = useState<number | null>(null)
+  const [buscaRestaurante, setBuscaRestaurante] = useState('')
+  const [consultaRestaurante, setConsultaRestaurante] = useState('')
   const [erroCarregamentoRestaurante, setErroCarregamentoRestaurante] =
     useState('')
   const [avaliacoes, setAvaliacoes] = useState<AvaliacaoRestaurante[]>([])
@@ -149,30 +151,75 @@ function App() {
     }
   }
 
+  function selecionarUsuario(userId: number) {
+    setRestauranteSelecionado(null)
+    setPerfilParaVoltar(null)
+    setUsuarioSelecionado(userId)
+  }
+
+  function buscarRestaurante(value: string) {
+    setBuscaRestaurante(value)
+    setConsultaRestaurante(value)
+    setUsuarioSelecionado(null)
+    setRestauranteSelecionado(null)
+    setPerfilParaVoltar(null)
+  }
+
+  function sair() {
+    setRestauranteSelecionado(null)
+    setUsuarioSelecionado(null)
+    setBuscaRestaurante('')
+    setConsultaRestaurante('')
+    setEmailLogado('')
+    setTela('login')
+  }
+
+  const navegacao = (
+    <NavegacaoLogada
+      email={emailLogado}
+      viewerId={viewerId}
+      buscaRestaurante={buscaRestaurante}
+      onBuscaRestauranteChange={(value) => {
+        setBuscaRestaurante(value)
+        if (!value.trim()) setConsultaRestaurante('')
+      }}
+      onBuscarRestaurante={buscarRestaurante}
+      onSelecionarUsuario={selecionarUsuario}
+      onMeuPerfil={() => {
+        if (viewerId !== null) selecionarUsuario(viewerId)
+      }}
+      onLogout={sair}
+    />
+  )
+
   if (tela === 'cadastro') {
     return <Cadastro onIrParaLogin={() => setTela('login')} />
   }
 
   if (tela === 'logado' && usuarioSelecionado !== null) {
     return (
-      <PerfilUsuario
-        key={usuarioSelecionado}
-        userId={usuarioSelecionado}
-        viewerId={viewerId}
-        email={emailLogado}
-        onVoltar={() => setUsuarioSelecionado(null)}
-        onSelecionarUsuario={setUsuarioSelecionado}
-        onSelecionarRestaurante={(restaurantId) =>
-          abrirRestaurante(restaurantId, usuarioSelecionado)
-        }
-        erroCarregamentoRestaurante={erroCarregamentoRestaurante}
-      />
+      <>
+        {navegacao}
+        <PerfilUsuario
+          key={usuarioSelecionado}
+          userId={usuarioSelecionado}
+          viewerId={viewerId}
+          email={emailLogado}
+          onVoltar={() => setUsuarioSelecionado(null)}
+          onSelecionarUsuario={setUsuarioSelecionado}
+          onSelecionarRestaurante={(restaurantId) =>
+            abrirRestaurante(restaurantId, usuarioSelecionado)
+          }
+          erroCarregamentoRestaurante={erroCarregamentoRestaurante}
+        />
+      </>
     )
   }
 
   if (tela === 'logado') {
     return (
       <>
+        {navegacao}
         <div hidden={restauranteSelecionado !== null}>
           <ListaRestaurantes
             email={emailLogado}
@@ -183,18 +230,12 @@ function App() {
             }
             onSelecionarUsuario={setUsuarioSelecionado}
             erroCarregamentoRestaurante={erroCarregamentoRestaurante}
-            onLogout={() => {
-              setRestauranteSelecionado(null)
-              setUsuarioSelecionado(null)
-              setEmailLogado('')
-              setTela('login')
-            }}
+            onLogout={sair}
           />
         </div>
         {restauranteSelecionado !== null && (
           <main className="mx-auto min-h-screen max-w-7xl bg-brand-cream p-5 sm:p-8 lg:grid lg:grid-cols-[minmax(0,1.05fr)_minmax(20rem,0.95fr)] lg:content-start lg:gap-x-10">
             <header className="mb-8 flex items-start justify-between gap-4 lg:col-span-2">
-              <BrandLogo />
               <button
                 type="button"
                 onClick={() => {

@@ -33,9 +33,6 @@ function NavegacaoLogada({
       <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-3">
         <div className="mr-auto">
           <BrandLogo />
-          <p className="text-xs text-zinc-600">
-            Olá, {email.split('@')[0]}
-          </p>
         </div>
         <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto sm:flex-nowrap">
           <BuscaUsuarios onSelecionarUsuario={onSelecionarUsuario} />

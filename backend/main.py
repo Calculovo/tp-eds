@@ -27,16 +27,26 @@ class VoteIn(BaseModel):
 class UserIn(BaseModel):
     email: EmailStr
 
-def _list_user_reviews(cur, user_id: int) -> list[dict]:
+def _list_user_reviews(
+    cur,
+    user_id: int,
+    viewer_id: int | None = None,
+) -> list[dict]:
     cur.execute(
         """
-        SELECT rv.id, r.id, r.name, r.image_url, rv.rating, rv.comment
+        SELECT rv.id, r.id, r.name, r.image_url, rv.rating, rv.comment,
+               (SELECT COUNT(*) FROM review_votes AS votes
+                WHERE votes.review_id = rv.id AND votes.is_helpful = TRUE),
+               (SELECT COUNT(*) FROM review_votes AS votes
+                WHERE votes.review_id = rv.id AND votes.is_helpful = FALSE),
+               (SELECT votes.is_helpful FROM review_votes AS votes
+                WHERE votes.review_id = rv.id AND votes.user_id = %s)
         FROM reviews AS rv
         JOIN restaurants AS r ON r.id = rv.restaurant_id
         WHERE rv.user_id = %s
         ORDER BY rv.id DESC
         """,
-        (user_id,),
+        (viewer_id, user_id),
     )
     return [
         {
@@ -46,6 +56,9 @@ def _list_user_reviews(cur, user_id: int) -> list[dict]:
             "restaurant_image_url": row[3],
             "rating": float(row[4]),
             "comment": row[5],
+            "helpful_votes": row[6],
+            "unhelpful_votes": row[7],
+            "viewer_vote": row[8],
         }
         for row in cur.fetchall()
     ]
@@ -181,14 +194,20 @@ def list_restaurant_reviews(
 
 
 @app.get("/reviews/top")
-def list_top_reviews() -> list[dict]:
+def list_top_reviews(
+    viewer_id: int | None = Query(default=None),
+) -> list[dict]:
     with connect() as conn:
         with conn.cursor() as cur:
             cur.execute(
                 """
                 SELECT rv.id, u.id, u.username, r.name, rv.rating, rv.comment,
                        COUNT(votes.id) FILTER (WHERE votes.is_helpful = TRUE),
-                       COUNT(votes.id) FILTER (WHERE votes.is_helpful = FALSE)
+                       COUNT(votes.id) FILTER (WHERE votes.is_helpful = FALSE),
+                       (SELECT user_vote.is_helpful
+                        FROM review_votes AS user_vote
+                        WHERE user_vote.review_id = rv.id
+                          AND user_vote.user_id = %s)
                 FROM reviews AS rv
                 JOIN users AS u ON u.id = rv.user_id
                 JOIN restaurants AS r ON r.id = rv.restaurant_id
@@ -202,7 +221,8 @@ def list_top_reviews() -> list[dict]:
                 COUNT(votes.id) FILTER (WHERE votes.is_helpful = TRUE) DESC,
                 rv.id DESC
                 LIMIT 5
-                """
+                """,
+                (viewer_id,),
             )
             return [
                 {
@@ -214,7 +234,7 @@ def list_top_reviews() -> list[dict]:
                     "comment": row[5],
                     "helpful_votes": row[6],
                     "unhelpful_votes": row[7],
-                    "score": row[6] - row[7],
+                    "viewer_vote": row[8],
                 }
                 for row in cur.fetchall()
             ]
@@ -300,12 +320,15 @@ def get_user_profile(
                 "followers_count": row[2],
                 "following_count": row[3],
                 "is_following": is_following,
-                "reviews": _list_user_reviews(cur, user_id),
+                "reviews": _list_user_reviews(cur, user_id, viewer_id),
             }
 
 
 @app.get("/users/{user_id}/reviews")
-def list_user_reviews(user_id: int) -> list[dict]:
+def list_user_reviews(
+    user_id: int,
+    viewer_id: int | None = Query(default=None),
+) -> list[dict]:
     with connect() as conn:
         with conn.cursor() as cur:
             cur.execute("SELECT 1 FROM users WHERE id = %s", (user_id,))
@@ -313,7 +336,7 @@ def list_user_reviews(user_id: int) -> list[dict]:
                 raise HTTPException(
                     status_code=404, detail="Usuário não encontrado."
                 )
-            return _list_user_reviews(cur, user_id)
+            return _list_user_reviews(cur, user_id, viewer_id)
 
 
 def _list_follow_relationships(user_id: int, relationship: str) -> list[dict]:

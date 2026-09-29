@@ -17,6 +17,9 @@ type AvaliacaoRestaurante = {
   email: string
   rating: number
   comment: string
+  helpful_votes: number
+  unhelpful_votes: number
+  viewer_vote: boolean | null
 }
 
 function App() {
@@ -29,6 +32,8 @@ function App() {
   const [avaliacoes, setAvaliacoes] = useState<AvaliacaoRestaurante[]>([])
   const [carregandoAvaliacoes, setCarregandoAvaliacoes] = useState(false)
   const [erroAvaliacoes, setErroAvaliacoes] = useState('')
+  const [votosEmEnvio, setVotosEmEnvio] = useState<number[]>([])
+  const [errosVoto, setErrosVoto] = useState<Record<number, string>>({})
 
   useEffect(() => {
     const restauranteId = restauranteSelecionado?.id
@@ -41,7 +46,8 @@ function App() {
     let ativa = true
     setCarregandoAvaliacoes(true)
     setErroAvaliacoes('')
-    fetch(`/api/restaurants/${restauranteId}/reviews`)
+    const viewer = viewerId === null ? '' : `?viewer_id=${viewerId}`
+    fetch(`/api/restaurants/${restauranteId}/reviews${viewer}`)
       .then((resposta) => {
         if (!resposta.ok) {
           throw new Error('Não foi possível carregar as avaliações.')
@@ -64,7 +70,7 @@ function App() {
     return () => {
       ativa = false
     }
-  }, [restauranteSelecionado?.id])
+  }, [restauranteSelecionado?.id, viewerId])
 
   useEffect(() => {
     if (!emailLogado) {
@@ -84,6 +90,51 @@ function App() {
       ativa = false
     }
   }, [emailLogado])
+
+  async function votarNaAvaliacao(reviewId: number, isHelpful: boolean) {
+    setVotosEmEnvio((atuais) => [...atuais, reviewId])
+    setErrosVoto((atuais) => {
+      const proximos = { ...atuais }
+      delete proximos[reviewId]
+      return proximos
+    })
+
+    try {
+      const resposta = await fetch(`/api/reviews/${reviewId}/votes`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: emailLogado, is_helpful: isHelpful }),
+      })
+      if (!resposta.ok) {
+        throw new Error('Não foi possível registrar seu voto.')
+      }
+      setAvaliacoes((atuais) =>
+        atuais.map((avaliacao) => {
+          if (avaliacao.id !== reviewId) return avaliacao
+          const votoAnterior = avaliacao.viewer_vote
+          return {
+            ...avaliacao,
+            helpful_votes:
+              avaliacao.helpful_votes +
+              Number(isHelpful) -
+              Number(votoAnterior === true),
+            unhelpful_votes:
+              avaliacao.unhelpful_votes +
+              Number(!isHelpful) -
+              Number(votoAnterior === false),
+            viewer_vote: isHelpful,
+          }
+        }),
+      )
+    } catch {
+      setErrosVoto((atuais) => ({
+        ...atuais,
+        [reviewId]: 'Não foi possível registrar seu voto. Tente novamente.',
+      }))
+    } finally {
+      setVotosEmEnvio((atuais) => atuais.filter((id) => id !== reviewId))
+    }
+  }
 
   if (tela === 'cadastro') {
     return <Cadastro onIrParaLogin={() => setTela('login')} />
@@ -233,6 +284,41 @@ function App() {
                       <p className="shrink-0 text-sm font-semibold text-amber-600">★ {avaliacao.rating.toFixed(1)}</p>
                     </div>
                     <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-zinc-700">{avaliacao.comment}</p>
+                    <div className="mt-3 flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => votarNaAvaliacao(avaliacao.id, true)}
+                        disabled={votosEmEnvio.includes(avaliacao.id)}
+                        aria-label="Marcar avaliação como útil"
+                        aria-pressed={avaliacao.viewer_vote === true}
+                        className={`rounded border px-3 py-1 text-sm transition disabled:opacity-60 ${
+                          avaliacao.viewer_vote === true
+                            ? 'border-brand-tomato bg-brand-tomato text-white'
+                            : 'border-zinc-300 text-zinc-700 hover:border-brand-tomato hover:text-brand-tomato'
+                        }`}
+                      >
+                        ▲ Útil ({avaliacao.helpful_votes})
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => votarNaAvaliacao(avaliacao.id, false)}
+                        disabled={votosEmEnvio.includes(avaliacao.id)}
+                        aria-label="Marcar avaliação como não útil"
+                        aria-pressed={avaliacao.viewer_vote === false}
+                        className={`rounded border px-3 py-1 text-sm transition disabled:opacity-60 ${
+                          avaliacao.viewer_vote === false
+                            ? 'border-brand-brown bg-brand-brown text-white'
+                            : 'border-zinc-300 text-zinc-700 hover:border-brand-brown hover:text-brand-brown'
+                        }`}
+                      >
+                        ▼ Não útil ({avaliacao.unhelpful_votes})
+                      </button>
+                    </div>
+                    {errosVoto[avaliacao.id] && (
+                      <p role="alert" className="mt-2 text-sm text-brand-tomato">
+                        {errosVoto[avaliacao.id]}
+                      </p>
+                    )}
                   </article>
                 ))}
               </div>

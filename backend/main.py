@@ -140,12 +140,21 @@ def vote_review(review_id: int, vote: VoteIn) -> dict:
     return {"status": "ok"}
 
 @app.get("/restaurants/{restaurant_id}/reviews")
-def list_restaurant_reviews(restaurant_id: int) -> list[dict]:
+def list_restaurant_reviews(
+    restaurant_id: int,
+    viewer_id: int | None = Query(default=None),
+) -> list[dict]:
     with connect() as conn:
         with conn.cursor() as cur:
             cur.execute(
                 """
-                SELECT rv.id, u.id, u.username, u.email, rv.rating, rv.comment
+                SELECT rv.id, u.id, u.username, u.email, rv.rating, rv.comment,
+                       (SELECT COUNT(*) FROM review_votes AS votes
+                        WHERE votes.review_id = rv.id AND votes.is_helpful = TRUE),
+                       (SELECT COUNT(*) FROM review_votes AS votes
+                        WHERE votes.review_id = rv.id AND votes.is_helpful = FALSE),
+                       (SELECT votes.is_helpful FROM review_votes AS votes
+                        WHERE votes.review_id = rv.id AND votes.user_id = %s)
                 FROM reviews AS rv
                 JOIN users AS u ON u.id = rv.user_id
                 WHERE rv.restaurant_id = %s
@@ -153,7 +162,7 @@ def list_restaurant_reviews(restaurant_id: int) -> list[dict]:
                   AND BTRIM(rv.comment) <> ''
                 ORDER BY rv.id DESC
                 """,
-                (restaurant_id,),
+                (viewer_id, restaurant_id),
             )
             return [
                 {
@@ -163,6 +172,9 @@ def list_restaurant_reviews(restaurant_id: int) -> list[dict]:
                     "email": row[3],
                     "rating": float(row[4]),
                     "comment": row[5],
+                    "helpful_votes": row[6],
+                    "unhelpful_votes": row[7],
+                    "viewer_vote": row[8],
                 }
                 for row in cur.fetchall()
             ]

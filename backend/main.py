@@ -180,6 +180,46 @@ def list_restaurant_reviews(
             ]
 
 
+@app.get("/reviews/top")
+def list_top_reviews() -> list[dict]:
+    with connect() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                SELECT rv.id, u.id, u.username, r.name, rv.rating, rv.comment,
+                       COUNT(votes.id) FILTER (WHERE votes.is_helpful = TRUE),
+                       COUNT(votes.id) FILTER (WHERE votes.is_helpful = FALSE)
+                FROM reviews AS rv
+                JOIN users AS u ON u.id = rv.user_id
+                JOIN restaurants AS r ON r.id = rv.restaurant_id
+                LEFT JOIN review_votes AS votes ON votes.review_id = rv.id
+                WHERE rv.comment IS NOT NULL AND BTRIM(rv.comment) <> ''
+                GROUP BY rv.id, u.id, r.id
+                ORDER BY (
+                    COUNT(votes.id) FILTER (WHERE votes.is_helpful = TRUE)
+                    - COUNT(votes.id) FILTER (WHERE votes.is_helpful = FALSE)
+                ) DESC,
+                COUNT(votes.id) FILTER (WHERE votes.is_helpful = TRUE) DESC,
+                rv.id DESC
+                LIMIT 5
+                """
+            )
+            return [
+                {
+                    "id": row[0],
+                    "user_id": row[1],
+                    "username": row[2],
+                    "restaurant_name": row[3],
+                    "rating": float(row[4]),
+                    "comment": row[5],
+                    "helpful_votes": row[6],
+                    "unhelpful_votes": row[7],
+                    "score": row[6] - row[7],
+                }
+                for row in cur.fetchall()
+            ]
+
+
 @app.get("/users")
 def search_users(
     name: str = Query(default="", max_length=50),

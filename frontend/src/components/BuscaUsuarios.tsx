@@ -50,9 +50,8 @@ function BuscaUsuarios({ onSelecionarUsuario }: BuscaUsuariosProps) {
   }
 
   return (
-    <section className="mb-8 rounded-lg border border-zinc-200 bg-white p-4">
-      <h2 className="mb-3 text-lg font-semibold text-brand-brown">Buscar usuários</h2>
-      <form onSubmit={enviarBusca} className="flex gap-2">
+    <div className="relative w-full sm:w-52">
+      <form onSubmit={enviarBusca} role="search">
         <input
           type="search"
           value={nomeBusca}
@@ -60,29 +59,52 @@ function BuscaUsuarios({ onSelecionarUsuario }: BuscaUsuariosProps) {
             setNomeBusca(event.target.value)
             if (!event.target.value.trim()) setConsulta('')
           }}
-          placeholder="Buscar usuário por nome"
-          aria-label="Nome do usuário"
-          className="min-w-0 flex-1 rounded border border-zinc-300 bg-white px-3 py-2"
+          placeholder="Busque um usuário"
+          aria-label="Busque um usuário"
+          className="w-full rounded-full border border-zinc-300 bg-white py-2 pl-4 pr-11 text-sm shadow-sm outline-none transition placeholder:text-zinc-500 focus:border-brand-tomato focus:ring-2 focus:ring-brand-tomato/20"
         />
-        <button type="submit" disabled={carregando} className="rounded bg-brand-tomato px-4 py-2 font-medium text-white hover:bg-brand-brown disabled:opacity-60">
-          {carregando ? 'Buscando...' : 'Buscar'}
+        <button
+          type="submit"
+          disabled={carregando}
+          aria-label="Buscar usuário"
+          className="absolute right-1 top-1 flex h-8 w-8 items-center justify-center rounded-full text-brand-tomato transition hover:bg-brand-tomato/10 disabled:opacity-60"
+        >
+          {carregando ? (
+            <span className="text-xs" aria-hidden="true">…</span>
+          ) : (
+            <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" className="h-4 w-4 stroke-current" strokeWidth="2">
+              <circle cx="10.8" cy="10.8" r="6.3" />
+              <path d="m16 16 4 4" strokeLinecap="round" />
+            </svg>
+          )}
         </button>
       </form>
-      {erro && <p role="alert" className="mt-3 text-sm text-brand-tomato">{erro}</p>}
-      {consulta && !carregando && !erro && usuarios.length === 0 && (
-        <p className="mt-3 text-sm text-zinc-600">Nenhum usuário encontrado.</p>
+      {(erro || carregando || (consulta && usuarios.length > 0) || (consulta && !erro && !carregando)) && (
+        <div className="absolute right-0 top-full z-20 mt-2 max-h-64 w-full overflow-y-auto rounded-xl border border-zinc-200 bg-white p-3 shadow-lg">
+          {erro && <p role="alert" className="text-sm text-brand-tomato">{erro}</p>}
+          {carregando && <p className="text-sm text-zinc-600">Buscando usuários...</p>}
+          {consulta && !carregando && !erro && usuarios.length === 0 && (
+            <p className="text-sm text-zinc-600">Nenhum usuário encontrado.</p>
+          )}
+          {usuarios.length > 0 && (
+            <ul className="divide-y divide-zinc-100">
+              {usuarios.map((usuario) => (
+                <li key={usuario.id}>
+                  <button
+                    type="button"
+                    onClick={() => onSelecionarUsuario(usuario.id)}
+                    className="flex w-full items-center justify-between gap-3 py-2 text-left hover:text-brand-tomato"
+                  >
+                    <span className="truncate font-medium">{usuario.username}</span>
+                    <span className="shrink-0 text-sm text-zinc-500">{usuario.review_count} reviews</span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
       )}
-      <ul className="mt-3 divide-y divide-zinc-100">
-        {usuarios.map((usuario) => (
-          <li key={usuario.id}>
-            <button type="button" onClick={() => onSelecionarUsuario(usuario.id)} className="flex w-full items-center justify-between py-2 text-left hover:text-brand-tomato">
-              <span className="font-medium">{usuario.username}</span>
-              <span className="text-sm text-zinc-500">{usuario.review_count} reviews</span>
-            </button>
-          </li>
-        ))}
-      </ul>
-    </section>
+    </div>
   )
 }
 

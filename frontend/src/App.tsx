@@ -4,6 +4,7 @@ import ListaRestaurantes, {
   type Restaurante,
 } from './components/ListaRestaurantes'
 import Login from './components/Login'
+import AvaliarRestaurante from './components/AvaliarRestaurante'
 import NavegacaoLogada from './components/NavegacaoLogada'
 import PerfilUsuario from './components/PerfilUsuario'
 import BotoesVotoReview from './components/BotoesVotoReview'
@@ -38,6 +39,8 @@ function App() {
   const [avaliacoes, setAvaliacoes] = useState<AvaliacaoRestaurante[]>([])
   const [carregandoAvaliacoes, setCarregandoAvaliacoes] = useState(false)
   const [erroAvaliacoes, setErroAvaliacoes] = useState('')
+  const [avaliandoRestaurante, setAvaliandoRestaurante] = useState(false)
+  const [atualizacaoRestaurante, setAtualizacaoRestaurante] = useState(0)
 
   useEffect(() => {
     const restauranteId = restauranteSelecionado?.id
@@ -74,7 +77,42 @@ function App() {
     return () => {
       ativa = false
     }
-  }, [restauranteSelecionado?.id, viewerId])
+  }, [restauranteSelecionado?.id, viewerId, atualizacaoRestaurante])
+
+  async function aposSalvarAvaliacao() {
+    const restaurantId = restauranteSelecionado?.id
+    setAvaliandoRestaurante(false)
+    setAtualizacaoRestaurante((atual) => atual + 1)
+    if (restaurantId === undefined) return
+
+    try {
+      const resposta = await fetch(`/api/restaurants/${restaurantId}`)
+      if (!resposta.ok) throw new Error('restaurant')
+      const dados = (await resposta.json()) as {
+        id: number
+        name: string
+        category: string
+        image_url: string | null
+        average_rating: number | null
+        review_count: number
+        rating_counts: number[]
+      }
+      setRestauranteSelecionado({
+        id: dados.id,
+        nome: dados.name,
+        categoria: dados.category,
+        imagem: dados.image_url,
+        mediaAvaliacoes: dados.average_rating,
+        quantidadeAvaliacoes: dados.review_count,
+        contagemAvaliacoes: dados.rating_counts,
+      })
+      setErroCarregamentoRestaurante('')
+    } catch {
+      setErroCarregamentoRestaurante(
+        'A avaliação foi salva, mas não foi possível atualizar os dados do restaurante.',
+      )
+    }
+  }
 
   useEffect(() => {
     if (!emailLogado) {
@@ -152,12 +190,14 @@ function App() {
   }
 
   function selecionarUsuario(userId: number) {
+    setAvaliandoRestaurante(false)
     setRestauranteSelecionado(null)
     setPerfilParaVoltar(null)
     setUsuarioSelecionado(userId)
   }
 
   function buscarRestaurante(value: string) {
+    setAvaliandoRestaurante(false)
     setBuscaRestaurante(value)
     setConsultaRestaurante(value)
     setUsuarioSelecionado(null)
@@ -165,7 +205,17 @@ function App() {
     setPerfilParaVoltar(null)
   }
 
+  function irParaInicio() {
+    setAvaliandoRestaurante(false)
+    setBuscaRestaurante('')
+    setConsultaRestaurante('')
+    setUsuarioSelecionado(null)
+    setRestauranteSelecionado(null)
+    setPerfilParaVoltar(null)
+  }
+
   function sair() {
+    setAvaliandoRestaurante(false)
     setRestauranteSelecionado(null)
     setUsuarioSelecionado(null)
     setBuscaRestaurante('')
@@ -185,6 +235,7 @@ function App() {
       }}
       onBuscarRestaurante={buscarRestaurante}
       onSelecionarUsuario={selecionarUsuario}
+      onIrParaInicio={irParaInicio}
       onMeuPerfil={() => {
         if (viewerId !== null) selecionarUsuario(viewerId)
       }}
@@ -258,17 +309,26 @@ function App() {
                 <h1 className="text-4xl font-extrabold tracking-tight text-brand-brown sm:text-5xl">
                   {restauranteSelecionado.nome}
                 </h1>
-                {restauranteSelecionado.mediaAvaliacoes !== null && (
-                  <p className="mb-1 rounded-full bg-white px-3 py-1.5 text-sm font-bold text-amber-600 shadow-sm">
-                    ★ {restauranteSelecionado.mediaAvaliacoes.toFixed(1)}
-                    <span className="ml-1 font-medium text-zinc-500">
-                      ({restauranteSelecionado.quantidadeAvaliacoes}{' '}
-                      {restauranteSelecionado.quantidadeAvaliacoes === 1
-                        ? 'avaliação'
-                        : 'avaliações'})
-                    </span>
-                  </p>
-                )}
+                <div className="mb-1 flex flex-wrap items-center gap-3">
+                  {restauranteSelecionado.mediaAvaliacoes !== null && (
+                    <p className="rounded-full bg-white px-3 py-1.5 text-sm font-bold text-amber-600 shadow-sm">
+                      ★ {restauranteSelecionado.mediaAvaliacoes.toFixed(1)}
+                      <span className="ml-1 font-medium text-zinc-500">
+                        ({restauranteSelecionado.quantidadeAvaliacoes}{' '}
+                        {restauranteSelecionado.quantidadeAvaliacoes === 1
+                          ? 'avaliação'
+                          : 'avaliações'})
+                      </span>
+                    </p>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => setAvaliandoRestaurante(true)}
+                    className="rounded-lg bg-brand-tomato px-4 py-2 text-sm font-semibold text-white transition hover:bg-brand-brown"
+                  >
+                    Avaliar
+                  </button>
+                </div>
               </div>
             </section>
             <div className="min-w-0">
@@ -389,6 +449,14 @@ function App() {
               </div>
             </section>
           </main>
+        )}
+        {avaliandoRestaurante && restauranteSelecionado !== null && (
+          <AvaliarRestaurante
+            restaurante={restauranteSelecionado}
+            email={emailLogado}
+            onFechar={() => setAvaliandoRestaurante(false)}
+            onSalvo={aposSalvarAvaliacao}
+          />
         )}
       </>
     )

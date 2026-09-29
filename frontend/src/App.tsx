@@ -224,13 +224,13 @@ function App() {
           <ListaRestaurantes
             email={emailLogado}
             viewerId={viewerId}
+            consulta={consultaRestaurante}
             onSelecionarRestaurante={setRestauranteSelecionado}
             onSelecionarRestaurantePorId={(restaurantId) =>
               abrirRestaurante(restaurantId)
             }
             onSelecionarUsuario={setUsuarioSelecionado}
             erroCarregamentoRestaurante={erroCarregamentoRestaurante}
-            onLogout={sair}
           />
         </div>
         {restauranteSelecionado !== null && (

@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react'
 import ListaRelacoes from './ListaRelacoes'
-import BrandLogo from './BrandLogo'
 import BotoesVotoReview from './BotoesVotoReview'
 
 type Review = {
@@ -106,7 +105,6 @@ function PerfilUsuario({
   return (
     <main className="min-h-screen bg-brand-cream p-8">
       <header className="mb-8 flex items-start justify-between gap-4">
-        <BrandLogo />
         <button type="button" onClick={onVoltar} className="rounded px-3 py-2 text-sm font-medium text-brand-tomato hover:bg-brand-tomato/10">Voltar</button>
       </header>
       {erroCarregamentoRestaurante && (

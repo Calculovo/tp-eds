@@ -7,7 +7,9 @@ type ListaRestaurantesProps = {
   email: string
   viewerId: number | null
   onSelecionarRestaurante: (restaurante: Restaurante) => void
+  onSelecionarRestaurantePorId: (restaurantId: number) => void
   onSelecionarUsuario: (userId: number) => void
+  erroCarregamentoRestaurante: string
   onLogout: () => void
 }
 
@@ -53,7 +55,9 @@ function ListaRestaurantes({
   email,
   viewerId,
   onSelecionarRestaurante,
+  onSelecionarRestaurantePorId,
   onSelecionarUsuario,
+  erroCarregamentoRestaurante,
   onLogout,
 }: ListaRestaurantesProps) {
   const [nomeBusca, setNomeBusca] = useState('')
@@ -155,6 +159,11 @@ function ListaRestaurantes({
           </button>
         </nav>
       </header>
+      {erroCarregamentoRestaurante && (
+        <p role="alert" className="mb-4 text-sm text-brand-tomato">
+          {erroCarregamentoRestaurante}
+        </p>
+      )}
 
       <div className="grid grid-cols-1 items-start gap-10 lg:grid-cols-[minmax(0,1.6fr)_minmax(20rem,1fr)]">
         <section aria-labelledby="restaurantes-titulo">
@@ -198,6 +207,7 @@ function ListaRestaurantes({
           email={email}
           viewerId={viewerId}
           onSelecionarUsuario={onSelecionarUsuario}
+          onSelecionarRestaurante={onSelecionarRestaurantePorId}
         />
       </div>
     </main>

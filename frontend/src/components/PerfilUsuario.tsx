@@ -5,6 +5,7 @@ import BotoesVotoReview from './BotoesVotoReview'
 
 type Review = {
   id: number
+  restaurant_id: number
   restaurant_name: string
   restaurant_image_url: string | null
   rating: number
@@ -29,6 +30,8 @@ type PerfilUsuarioProps = {
   email: string
   onVoltar: () => void
   onSelecionarUsuario: (userId: number) => void
+  onSelecionarRestaurante: (restaurantId: number) => void
+  erroCarregamentoRestaurante: string
 }
 
 function PerfilUsuario({
@@ -37,6 +40,8 @@ function PerfilUsuario({
   email,
   onVoltar,
   onSelecionarUsuario,
+  onSelecionarRestaurante,
+  erroCarregamentoRestaurante,
 }: PerfilUsuarioProps) {
   const [perfil, setPerfil] = useState<Perfil | null>(null)
   const [erro, setErro] = useState('')
@@ -104,6 +109,11 @@ function PerfilUsuario({
         <BrandLogo />
         <button type="button" onClick={onVoltar} className="rounded px-3 py-2 text-sm font-medium text-brand-tomato hover:bg-brand-tomato/10">Voltar</button>
       </header>
+      {erroCarregamentoRestaurante && (
+        <p role="alert" className="mb-4 text-sm text-brand-tomato">
+          {erroCarregamentoRestaurante}
+        </p>
+      )}
       {carregando && <p className="text-sm text-zinc-600">Carregando perfil...</p>}
       {erro && <p role="alert" className="text-sm text-brand-tomato">{erro}</p>}
       {perfil && (
@@ -179,7 +189,13 @@ function PerfilUsuario({
               <li key={review.id} className="flex gap-4 rounded-lg border border-zinc-200 bg-white p-4">
                 {review.restaurant_image_url && <img src={review.restaurant_image_url} alt="" className="h-20 w-20 rounded object-cover" />}
                 <div>
-                  <p className="font-semibold text-brand-brown">{review.restaurant_name}</p>
+                  <button
+                    type="button"
+                    onClick={() => onSelecionarRestaurante(review.restaurant_id)}
+                    className="text-left font-semibold text-brand-brown hover:text-brand-tomato hover:underline"
+                  >
+                    {review.restaurant_name}
+                  </button>
                   <p className="text-sm font-semibold text-amber-600">★ {review.rating.toFixed(1)}</p>
                   {review.comment && <p className="mt-2 text-sm text-zinc-700">{review.comment}</p>}
                   <BotoesVotoReview

@@ -30,6 +30,9 @@ function App() {
   const [usuarioSelecionado, setUsuarioSelecionado] = useState<number | null>(null)
   const [restauranteSelecionado, setRestauranteSelecionado] =
     useState<Restaurante | null>(null)
+  const [perfilParaVoltar, setPerfilParaVoltar] = useState<number | null>(null)
+  const [erroCarregamentoRestaurante, setErroCarregamentoRestaurante] =
+    useState('')
   const [avaliacoes, setAvaliacoes] = useState<AvaliacaoRestaurante[]>([])
   const [carregandoAvaliacoes, setCarregandoAvaliacoes] = useState(false)
   const [erroAvaliacoes, setErroAvaliacoes] = useState('')
@@ -111,6 +114,41 @@ function App() {
     )
   }
 
+  async function abrirRestaurante(
+    restaurantId: number,
+    retornarAoPerfilId: number | null = null,
+  ) {
+    setErroCarregamentoRestaurante('')
+    try {
+      const resposta = await fetch(`/api/restaurants/${restaurantId}`)
+      if (!resposta.ok) throw new Error('restaurant')
+      const dados = (await resposta.json()) as {
+        id: number
+        name: string
+        category: string
+        image_url: string | null
+        average_rating: number | null
+        review_count: number
+        rating_counts: number[]
+      }
+      setRestauranteSelecionado({
+        id: dados.id,
+        nome: dados.name,
+        categoria: dados.category,
+        imagem: dados.image_url,
+        mediaAvaliacoes: dados.average_rating,
+        quantidadeAvaliacoes: dados.review_count,
+        contagemAvaliacoes: dados.rating_counts,
+      })
+      setPerfilParaVoltar(retornarAoPerfilId)
+      if (retornarAoPerfilId !== null) setUsuarioSelecionado(null)
+    } catch {
+      setErroCarregamentoRestaurante(
+        'Não foi possível abrir a página deste restaurante.',
+      )
+    }
+  }
+
   if (tela === 'cadastro') {
     return <Cadastro onIrParaLogin={() => setTela('login')} />
   }
@@ -124,6 +162,10 @@ function App() {
         email={emailLogado}
         onVoltar={() => setUsuarioSelecionado(null)}
         onSelecionarUsuario={setUsuarioSelecionado}
+        onSelecionarRestaurante={(restaurantId) =>
+          abrirRestaurante(restaurantId, usuarioSelecionado)
+        }
+        erroCarregamentoRestaurante={erroCarregamentoRestaurante}
       />
     )
   }
@@ -136,7 +178,11 @@ function App() {
             email={emailLogado}
             viewerId={viewerId}
             onSelecionarRestaurante={setRestauranteSelecionado}
+            onSelecionarRestaurantePorId={(restaurantId) =>
+              abrirRestaurante(restaurantId)
+            }
             onSelecionarUsuario={setUsuarioSelecionado}
+            erroCarregamentoRestaurante={erroCarregamentoRestaurante}
             onLogout={() => {
               setRestauranteSelecionado(null)
               setUsuarioSelecionado(null)
@@ -151,7 +197,13 @@ function App() {
               <BrandLogo />
               <button
                 type="button"
-                onClick={() => setRestauranteSelecionado(null)}
+                onClick={() => {
+                  setRestauranteSelecionado(null)
+                  if (perfilParaVoltar !== null) {
+                    setUsuarioSelecionado(perfilParaVoltar)
+                  }
+                  setPerfilParaVoltar(null)
+                }}
                 className="rounded-lg px-3 py-2 text-sm font-medium text-brand-tomato transition hover:bg-brand-tomato/10"
               >
                 Voltar aos resultados

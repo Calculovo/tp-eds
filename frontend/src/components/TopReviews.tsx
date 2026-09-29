@@ -4,6 +4,7 @@ import BotoesVotoReview from './BotoesVotoReview'
 type ReviewDestaque = {
   id: number
   user_id: number
+  restaurant_id: number
   username: string
   restaurant_name: string
   rating: number
@@ -17,9 +18,15 @@ type TopReviewsProps = {
   email: string
   viewerId: number | null
   onSelecionarUsuario: (userId: number) => void
+  onSelecionarRestaurante: (restaurantId: number) => void
 }
 
-function TopReviews({ email, viewerId, onSelecionarUsuario }: TopReviewsProps) {
+function TopReviews({
+  email,
+  viewerId,
+  onSelecionarUsuario,
+  onSelecionarRestaurante,
+}: TopReviewsProps) {
   const [reviews, setReviews] = useState<ReviewDestaque[]>([])
   const [carregando, setCarregando] = useState(true)
   const [erro, setErro] = useState('')
@@ -91,9 +98,13 @@ function TopReviews({ email, viewerId, onSelecionarUsuario }: TopReviewsProps) {
             <article className="rounded-xl border border-zinc-200 bg-white p-4 shadow-sm">
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
-                  <p className="truncate text-sm font-semibold text-brand-brown">
+                  <button
+                    type="button"
+                    onClick={() => onSelecionarRestaurante(review.restaurant_id)}
+                    className="block max-w-full truncate text-left text-sm font-semibold text-brand-brown hover:text-brand-tomato hover:underline"
+                  >
                     {indice + 1}. {review.restaurant_name}
-                  </p>
+                  </button>
                   <button
                     type="button"
                     onClick={() => onSelecionarUsuario(review.user_id)}

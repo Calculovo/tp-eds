@@ -101,6 +101,41 @@ def search_restaurants(name: str = Query(default="", max_length=255)) -> list[di
                 for row in cur.fetchall()
             ]
 
+
+@app.get("/restaurants/{restaurant_id}")
+def get_restaurant(restaurant_id: int) -> dict:
+    with connect() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                SELECT r.id, r.name, r.category, r.image_url,
+                       AVG(rv.rating), COUNT(rv.id),
+                       COUNT(rv.id) FILTER (WHERE ROUND(rv.rating) = 1),
+                       COUNT(rv.id) FILTER (WHERE ROUND(rv.rating) = 2),
+                       COUNT(rv.id) FILTER (WHERE ROUND(rv.rating) = 3),
+                       COUNT(rv.id) FILTER (WHERE ROUND(rv.rating) = 4),
+                       COUNT(rv.id) FILTER (WHERE ROUND(rv.rating) = 5)
+                FROM restaurants AS r
+                LEFT JOIN reviews AS rv ON rv.restaurant_id = r.id
+                WHERE r.id = %s
+                GROUP BY r.id
+                """,
+                (restaurant_id,),
+            )
+            row = cur.fetchone()
+            if row is None:
+                raise HTTPException(status_code=404, detail="Restaurant not found")
+            return {
+                "id": row[0],
+                "name": row[1],
+                "category": row[2],
+                "image_url": row[3],
+                "average_rating": float(row[4]) if row[4] is not None else None,
+                "review_count": row[5],
+                "rating_counts": list(row[6:11]),
+            }
+
+
 @app.post("/restaurants/{restaurant_id}/reviews", status_code=201)
 def create_review(restaurant_id: int, review: ReviewIn) -> dict:
     with connect() as conn:
@@ -201,7 +236,7 @@ def list_top_reviews(
         with conn.cursor() as cur:
             cur.execute(
                 """
-                SELECT rv.id, u.id, u.username, r.name, rv.rating, rv.comment,
+                SELECT rv.id, u.id, u.username, r.id, r.name, rv.rating, rv.comment,
                        COUNT(votes.id) FILTER (WHERE votes.is_helpful = TRUE),
                        COUNT(votes.id) FILTER (WHERE votes.is_helpful = FALSE),
                        (SELECT user_vote.is_helpful
@@ -229,12 +264,14 @@ def list_top_reviews(
                     "id": row[0],
                     "user_id": row[1],
                     "username": row[2],
-                    "restaurant_name": row[3],
-                    "rating": float(row[4]),
-                    "comment": row[5],
-                    "helpful_votes": row[6],
-                    "unhelpful_votes": row[7],
-                    "viewer_vote": row[8],
+                    "restaurant_id": row[3],
+                    "restaurant_name": row[4],
+                    "rating": float(row[5]),
+                    "comment": row[6],
+                    "helpful_votes": row[7],
+                    "unhelpful_votes": row[8],
+                    "viewer_vote": row[9],
+                    "score": row[7] - row[8],
                 }
                 for row in cur.fetchall()
             ]

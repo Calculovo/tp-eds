@@ -18,11 +18,13 @@ type AvaliacaoRestaurante = {
   username: string
   email: string
   rating: number
-  comment: string
+  comment: string | null
   helpful_votes: number
   unhelpful_votes: number
   viewer_vote: boolean | null
 }
+
+type AvaliacaoInicial = Pick<AvaliacaoRestaurante, 'rating' | 'comment'>
 
 function App() {
   const [tela, setTela] = useState<Tela>('login')
@@ -37,20 +39,29 @@ function App() {
   const [erroCarregamentoRestaurante, setErroCarregamentoRestaurante] =
     useState('')
   const [avaliacoes, setAvaliacoes] = useState<AvaliacaoRestaurante[]>([])
+  const [avaliacoesCarregadasPara, setAvaliacoesCarregadasPara] = useState<{
+    restauranteId: number
+    viewerId: number | null
+    versao: number
+  } | null>(null)
   const [carregandoAvaliacoes, setCarregandoAvaliacoes] = useState(false)
   const [erroAvaliacoes, setErroAvaliacoes] = useState('')
   const [avaliandoRestaurante, setAvaliandoRestaurante] = useState(false)
+  const [avaliacaoInicial, setAvaliacaoInicial] =
+    useState<AvaliacaoInicial | null>(null)
   const [atualizacaoRestaurante, setAtualizacaoRestaurante] = useState(0)
 
   useEffect(() => {
     const restauranteId = restauranteSelecionado?.id
     if (restauranteId === undefined) {
       setAvaliacoes([])
+      setAvaliacoesCarregadasPara(null)
       setCarregandoAvaliacoes(false)
       return
     }
 
     let ativa = true
+    setAvaliacoesCarregadasPara(null)
     setCarregandoAvaliacoes(true)
     setErroAvaliacoes('')
     const viewer = viewerId === null ? '' : `?viewer_id=${viewerId}`
@@ -62,7 +73,14 @@ function App() {
         return resposta.json() as Promise<AvaliacaoRestaurante[]>
       })
       .then((resultados) => {
-        if (ativa) setAvaliacoes(resultados)
+        if (ativa) {
+          setAvaliacoes(resultados)
+          setAvaliacoesCarregadasPara({
+            restauranteId,
+            viewerId,
+            versao: atualizacaoRestaurante,
+          })
+        }
       })
       .catch(() => {
         if (ativa) {
@@ -82,6 +100,7 @@ function App() {
   async function aposSalvarAvaliacao() {
     const restaurantId = restauranteSelecionado?.id
     setAvaliandoRestaurante(false)
+    setAvaliacaoInicial(null)
     setAtualizacaoRestaurante((atual) => atual + 1)
     if (restaurantId === undefined) return
 
@@ -157,6 +176,7 @@ function App() {
   async function abrirRestaurante(
     restaurantId: number,
     retornarAoPerfilId: number | null = null,
+    reviewDraft: AvaliacaoInicial | null = null,
   ) {
     setErroCarregamentoRestaurante('')
     try {
@@ -181,6 +201,8 @@ function App() {
         contagemAvaliacoes: dados.rating_counts,
       })
       setPerfilParaVoltar(retornarAoPerfilId)
+      setAvaliacaoInicial(reviewDraft)
+      setAvaliandoRestaurante(reviewDraft !== null)
       if (retornarAoPerfilId !== null) setUsuarioSelecionado(null)
     } catch {
       setErroCarregamentoRestaurante(
@@ -191,6 +213,7 @@ function App() {
 
   function selecionarUsuario(userId: number) {
     setAvaliandoRestaurante(false)
+    setAvaliacaoInicial(null)
     setRestauranteSelecionado(null)
     setPerfilParaVoltar(null)
     setUsuarioSelecionado(userId)
@@ -198,6 +221,7 @@ function App() {
 
   function buscarRestaurante(value: string) {
     setAvaliandoRestaurante(false)
+    setAvaliacaoInicial(null)
     setBuscaRestaurante(value)
     setConsultaRestaurante(value)
     setUsuarioSelecionado(null)
@@ -207,6 +231,7 @@ function App() {
 
   function irParaInicio() {
     setAvaliandoRestaurante(false)
+    setAvaliacaoInicial(null)
     setBuscaRestaurante('')
     setConsultaRestaurante('')
     setUsuarioSelecionado(null)
@@ -216,6 +241,7 @@ function App() {
 
   function sair() {
     setAvaliandoRestaurante(false)
+    setAvaliacaoInicial(null)
     setRestauranteSelecionado(null)
     setUsuarioSelecionado(null)
     setBuscaRestaurante('')
@@ -242,6 +268,14 @@ function App() {
       onLogout={sair}
     />
   )
+  const comentariosVisiveis = avaliacoes.filter(
+    (avaliacao) => avaliacao.comment?.trim(),
+  )
+  const avaliacoesProntas =
+    restauranteSelecionado !== null &&
+    avaliacoesCarregadasPara?.restauranteId === restauranteSelecionado.id &&
+    avaliacoesCarregadasPara.viewerId === viewerId &&
+    avaliacoesCarregadasPara.versao === atualizacaoRestaurante
 
   if (tela === 'cadastro') {
     return <Cadastro onIrParaLogin={() => setTela('login')} />
@@ -260,6 +294,12 @@ function App() {
           onSelecionarUsuario={setUsuarioSelecionado}
           onSelecionarRestaurante={(restaurantId) =>
             abrirRestaurante(restaurantId, usuarioSelecionado)
+          }
+          onEditarAvaliacao={(restaurantId, rating, comment) =>
+            abrirRestaurante(restaurantId, usuarioSelecionado, {
+              rating,
+              comment,
+            })
           }
           erroCarregamentoRestaurante={erroCarregamentoRestaurante}
         />
@@ -340,11 +380,30 @@ function App() {
               </div>
               <button
                 type="button"
-                onClick={() => setAvaliandoRestaurante(true)}
+                onClick={() => {
+                  const minhaAvaliacao = avaliacoes.find(
+                    (avaliacao) => avaliacao.user_id === viewerId,
+                  )
+                  setAvaliacaoInicial(
+                    minhaAvaliacao
+                      ? {
+                          rating: minhaAvaliacao.rating,
+                          comment: minhaAvaliacao.comment,
+                        }
+                      : null,
+                  )
+                  setAvaliandoRestaurante(true)
+                }}
+                disabled={
+                  !avaliacoesProntas ||
+                  erroAvaliacoes !== ''
+                }
                 className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-brand-tomato px-5 py-3 text-base font-bold text-white shadow-md transition hover:bg-brand-brown focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-tomato"
               >
                 <span aria-hidden="true">✎</span>
-                Avaliar este restaurante
+                {!avaliacoesProntas || carregandoAvaliacoes
+                  ? 'Carregando avaliação...'
+                  : 'Avaliar este restaurante'}
               </button>
               <section
                 aria-labelledby="distribuicao-titulo"
@@ -415,16 +474,16 @@ function App() {
                   Comentários
                 </h2>
                 <span className="rounded-full bg-brand-cream px-3 py-1 text-xs font-medium text-zinc-600">
-                  {avaliacoes.length}
+                  {comentariosVisiveis.length}
                 </span>
               </div>
               <div className="mt-4 max-h-[65vh] overflow-y-auto pr-2">
                 {carregandoAvaliacoes && <p className="text-sm text-zinc-600">Carregando...</p>}
                 {erroAvaliacoes && <p role="alert" className="text-sm text-brand-tomato">{erroAvaliacoes}</p>}
-                {!carregandoAvaliacoes && !erroAvaliacoes && avaliacoes.length === 0 && (
+                {!carregandoAvaliacoes && !erroAvaliacoes && comentariosVisiveis.length === 0 && (
                   <p className="text-sm text-zinc-600">Ainda não há comentários.</p>
                 )}
-                {avaliacoes.map((avaliacao) => (
+                {comentariosVisiveis.map((avaliacao) => (
                   <article key={avaliacao.id} className="border-b border-zinc-200 py-4 first:pt-0">
                     <div className="flex items-start justify-between gap-3">
                       <button
@@ -444,6 +503,17 @@ function App() {
                       unhelpfulVotes={avaliacao.unhelpful_votes}
                       viewerVote={avaliacao.viewer_vote}
                       onVotoRegistrado={atualizarVotoAvaliacao}
+                      onEditarAvaliacao={
+                        viewerId === avaliacao.user_id
+                          ? () => {
+                              setAvaliacaoInicial({
+                                rating: avaliacao.rating,
+                                comment: avaliacao.comment,
+                              })
+                              setAvaliandoRestaurante(true)
+                            }
+                          : undefined
+                      }
                     />
                   </article>
                 ))}
@@ -455,7 +525,11 @@ function App() {
           <AvaliarRestaurante
             restaurante={restauranteSelecionado}
             email={emailLogado}
-            onFechar={() => setAvaliandoRestaurante(false)}
+            avaliacaoInicial={avaliacaoInicial}
+            onFechar={() => {
+              setAvaliandoRestaurante(false)
+              setAvaliacaoInicial(null)
+            }}
             onSalvo={aposSalvarAvaliacao}
           />
         )}

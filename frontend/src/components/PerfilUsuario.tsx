@@ -54,6 +54,10 @@ function PerfilUsuario({
   const [listaSelecionada, setListaSelecionada] =
     useState<'followers' | 'following' | null>(null)
   const podeSeguir = viewerId !== null && viewerId !== userId
+  // Estados para edição do nome
+  const [editandoNome, setEditandoNome] = useState(false)
+  const [novoNome, setNovoNome] = useState('')
+  const [salvandoNome, setSalvandoNome] = useState(false)
 
   useEffect(() => {
     let ativa = true
@@ -81,6 +85,40 @@ function PerfilUsuario({
     if (!resposta.ok) return
     const delta = perfil.is_following ? -1 : 1
     setPerfil({ ...perfil, is_following: !perfil.is_following, followers_count: perfil.followers_count + delta })
+  }
+
+  async function salvarNovoNome(e: React.FormEvent) {
+    e.preventDefault()
+    if (!perfil) return
+    
+    const nomeLimpo = novoNome.trim()
+    if (!nomeLimpo || nomeLimpo === perfil.username) {
+      setEditandoNome(false)
+      return
+    }
+
+    setSalvandoNome(true)
+    setErro('')
+    
+    try {
+      const resposta = await fetch(`/api/users/${userId}/username`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: nomeLimpo }),
+      })
+      
+      if (!resposta.ok) {
+        const erroData = await resposta.json().catch(() => ({}))
+        throw new Error(erroData.detail || 'Não foi possível atualizar o nome.')
+      }
+      
+      setPerfil({ ...perfil, username: nomeLimpo })
+      setEditandoNome(false)
+    } catch (err: any) {
+      setErro(err.message)
+    } finally {
+      setSalvandoNome(false)
+    }
   }
 
   function atualizarVoto(reviewId: number, isHelpful: boolean) {
@@ -130,7 +168,30 @@ function PerfilUsuario({
               </div>
               
               <div>
-                <h1 className="text-3xl font-bold text-brand-brown">{perfil.username}</h1>
+                {editandoNome ? (
+                  <form onSubmit={salvarNovoNome} className="flex flex-wrap items-center gap-2">
+                    <input 
+                      type="text" 
+                      value={novoNome} 
+                      onChange={(e) => setNovoNome(e.target.value)} 
+                      className="w-full max-w-[200px] rounded border border-zinc-300 px-2 py-1 text-xl font-bold text-brand-brown focus:border-brand-tomato focus:outline-none sm:w-auto"
+                      autoFocus
+                      required
+                      maxLength={50}
+                    />
+                    <div className="flex gap-2">
+                      <button type="submit" disabled={salvandoNome} className="rounded bg-brand-tomato px-3 py-1.5 text-sm font-medium text-white hover:bg-brand-brown disabled:opacity-60">
+                        {salvandoNome ? 'Salvando...' : 'Salvar'}
+                      </button>
+                      <button type="button" onClick={() => setEditandoNome(false)} disabled={salvandoNome} className="rounded border border-zinc-300 px-3 py-1.5 text-sm font-medium text-zinc-600 hover:bg-zinc-100 disabled:opacity-60">
+                        Cancelar
+                      </button>
+                    </div>
+                  </form>
+                ) : (
+                  <h1 className="text-3xl font-bold text-brand-brown">{perfil.username}</h1>
+                )}
+
                 <div className="mt-2 flex gap-4 text-sm">
                   <button
                     type="button"
@@ -150,13 +211,17 @@ function PerfilUsuario({
                   </button>
                 </div>
                 
-                {/* Botões de Edição: Só aparecem se for o dono do perfil */}
-                {viewerId === userId && (
+                {/* Botões de Edição: Só aparecem se for o dono do perfil e não estiver editando */}
+                {viewerId === userId && !editandoNome && (
                   <div className="mt-4 flex gap-2">
-                    <button type="button" className="rounded border border-brand-tomato px-3 py-1 text-xs font-medium text-brand-tomato hover:bg-brand-tomato/10">
-                      Editar Foto
-                    </button>
-                    <button type="button" className="rounded border border-brand-tomato px-3 py-1 text-xs font-medium text-brand-tomato hover:bg-brand-tomato/10">
+                    <button 
+                      type="button" 
+                      onClick={() => {
+                        setNovoNome(perfil.username)
+                        setEditandoNome(true)
+                      }}
+                      className="rounded border border-brand-tomato px-3 py-1 text-xs font-medium text-brand-tomato hover:bg-brand-tomato/10"
+                    >
                       Editar Nome
                     </button>
                   </div>

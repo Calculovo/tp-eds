@@ -31,6 +31,9 @@ class ResetPasswordIn(BaseModel):
     email: EmailStr
     novaSenha: str
 
+class UpdateUsernameIn(BaseModel):
+    username: str = Field(min_length=1, max_length=50)
+
 def _list_user_reviews(
     cur,
     user_id: int,
@@ -481,4 +484,29 @@ def reset_password(payload: ResetPasswordIn) -> dict:
             
             conn.commit()
             
-    return {"status": "ok", "message": "Senha atualizada com sucesso no banco de dados."}
+        return {"status": "ok", "message": "Senha atualizada com sucesso no banco de dados."}
+
+@app.patch("/users/{user_id}/username")
+def update_username(user_id: int, payload: UpdateUsernameIn) -> dict:
+    with connect() as conn:
+        with conn.cursor() as cur:
+            # Verifica se o nome já está em uso por outra pessoa
+            cur.execute(
+                "SELECT id FROM users WHERE username = %s AND id != %s", 
+                (payload.username, user_id)
+            )
+            if cur.fetchone() is not None:
+                raise HTTPException(status_code=400, detail="Este nome de usuário já está em uso.")
+            
+            # Atualiza o nome
+            cur.execute(
+                "UPDATE users SET username = %s WHERE id = %s RETURNING id",
+                (payload.username, user_id)
+            )
+            
+            if cur.fetchone() is None:
+                raise HTTPException(status_code=404, detail="Usuário não encontrado.")
+            
+            conn.commit()
+            
+            return {"status": "ok", "username": payload.username}

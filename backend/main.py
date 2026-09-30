@@ -210,11 +210,13 @@ def list_restaurant_reviews(
                 FROM reviews AS rv
                 JOIN users AS u ON u.id = rv.user_id
                 WHERE rv.restaurant_id = %s
-                  AND rv.comment IS NOT NULL
-                  AND BTRIM(rv.comment) <> ''
+                  AND (
+                      (rv.comment IS NOT NULL AND BTRIM(rv.comment) <> '')
+                      OR rv.user_id = %s
+                  )
                 ORDER BY rv.id DESC
                 """,
-                (viewer_id, restaurant_id),
+                (viewer_id, restaurant_id, viewer_id),
             )
             return [
                 {

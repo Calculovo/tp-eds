@@ -30,6 +30,11 @@ type PerfilUsuarioProps = {
   onVoltar: () => void
   onSelecionarUsuario: (userId: number) => void
   onSelecionarRestaurante: (restaurantId: number) => void
+  onEditarAvaliacao: (
+    restaurantId: number,
+    rating: number,
+    comment: string | null,
+  ) => void
   erroCarregamentoRestaurante: string
 }
 
@@ -40,6 +45,7 @@ function PerfilUsuario({
   onVoltar,
   onSelecionarUsuario,
   onSelecionarRestaurante,
+  onEditarAvaliacao,
   erroCarregamentoRestaurante,
 }: PerfilUsuarioProps) {
   const [perfil, setPerfil] = useState<Perfil | null>(null)
@@ -203,6 +209,16 @@ function PerfilUsuario({
                     unhelpfulVotes={review.unhelpful_votes}
                     viewerVote={review.viewer_vote}
                     onVotoRegistrado={atualizarVoto}
+                    onEditarAvaliacao={
+                      viewerId === userId
+                        ? () =>
+                            onEditarAvaliacao(
+                              review.restaurant_id,
+                              review.rating,
+                              review.comment,
+                            )
+                        : undefined
+                    }
                   />
                 </div>
               </li>

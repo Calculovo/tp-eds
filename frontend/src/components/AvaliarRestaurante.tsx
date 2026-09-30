@@ -10,6 +10,10 @@ import useEscapeKey from './useEscapeKey'
 type AvaliarRestauranteProps = {
   restaurante: Restaurante
   email: string
+  avaliacaoInicial?: {
+    rating: number
+    comment: string | null
+  } | null
   onFechar: () => void
   onSalvo: () => void
 }
@@ -17,11 +21,14 @@ type AvaliarRestauranteProps = {
 function AvaliarRestaurante({
   restaurante,
   email,
+  avaliacaoInicial = null,
   onFechar,
   onSalvo,
 }: AvaliarRestauranteProps) {
-  const [nota, setNota] = useState(0)
-  const [comentario, setComentario] = useState('')
+  const [nota, setNota] = useState(avaliacaoInicial?.rating ?? 0)
+  const [comentario, setComentario] = useState(
+    avaliacaoInicial?.comment ?? '',
+  )
   const [salvando, setSalvando] = useState(false)
   const [erro, setErro] = useState('')
 

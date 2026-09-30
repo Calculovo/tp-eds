@@ -7,6 +7,7 @@ type BotoesVotoReviewProps = {
   unhelpfulVotes: number
   viewerVote: boolean | null
   onVotoRegistrado: (reviewId: number, isHelpful: boolean) => void
+  onEditarAvaliacao?: () => void
 }
 
 function BotoesVotoReview({
@@ -16,6 +17,7 @@ function BotoesVotoReview({
   unhelpfulVotes,
   viewerVote,
   onVotoRegistrado,
+  onEditarAvaliacao,
 }: BotoesVotoReviewProps) {
   const [enviando, setEnviando] = useState(false)
   const [erro, setErro] = useState('')
@@ -69,6 +71,15 @@ function BotoesVotoReview({
         >
           ▼ Não útil ({unhelpfulVotes})
         </button>
+        {onEditarAvaliacao && (
+          <button
+            type="button"
+            onClick={onEditarAvaliacao}
+            className="rounded border border-brand-tomato px-3 py-1 text-sm font-medium text-brand-tomato transition hover:bg-brand-tomato hover:text-white"
+          >
+            Editar avaliação
+          </button>
+        )}
       </div>
       {erro && <p role="alert" className="mt-2 text-sm text-brand-tomato">{erro}</p>}
     </>

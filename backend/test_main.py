@@ -145,6 +145,56 @@ def test_vote_review_upserts_vote_and_commits(monkeypatch):
 	connection.commit.assert_called_once()
 
 
+def test_list_restaurant_reviews_maps_vote_fields(monkeypatch):
+	cursor = _mock_database(monkeypatch)
+	cursor.fetchall.return_value = [
+		(5, 7, "sam", "sam@example.com", 4.5, "Nice", 3, 1, True)
+	]
+
+	result = main_module.list_restaurant_reviews(restaurant_id=3, viewer_id=9)
+
+	assert result == [
+		{
+			"id": 5,
+			"user_id": 7,
+			"username": "sam",
+			"email": "sam@example.com",
+			"rating": 4.5,
+			"comment": "Nice",
+			"helpful_votes": 3,
+			"unhelpful_votes": 1,
+			"viewer_vote": True,
+		}
+	]
+	assert cursor.execute.call_args.args[1] == (9, 3, 9)
+
+
+def test_list_top_reviews_maps_review_and_computes_score(monkeypatch):
+	cursor = _mock_database(monkeypatch)
+	cursor.fetchall.return_value = [
+		(5, 7, "sam", 3, "Cafe", 4.5, "Nice", 4, 1, False)
+	]
+
+	result = main_module.list_top_reviews(viewer_id=9)
+
+	assert result == [
+		{
+			"id": 5,
+			"user_id": 7,
+			"username": "sam",
+			"restaurant_id": 3,
+			"restaurant_name": "Cafe",
+			"rating": 4.5,
+			"comment": "Nice",
+			"helpful_votes": 4,
+			"unhelpful_votes": 1,
+			"viewer_vote": False,
+			"score": 3,
+		}
+	]
+	assert cursor.execute.call_args.args[1] == (9,)
+
+
 def test_list_user_reviews_returns_review_data(monkeypatch):
 	cursor = _mock_database(monkeypatch)
 	cursor.fetchone.return_value = (1,)

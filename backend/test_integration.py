@@ -173,3 +173,70 @@ def test_follow_and_unfollow_updates_user_profiles(initialized_test_database):
 	assert unfollow_response.status_code == 200
 	assert updated_profile.json()["followers_count"] == 0
 	assert updated_profile.json()["is_following"] is False
+
+
+def test_created_review_is_persisted(initialized_test_database):
+	restaurant_id = _insert_restaurant()
+	with TestClient(main_module.app) as client:
+		response = client.post(
+			f"/restaurants/{restaurant_id}/reviews",
+			json={
+				"email": "persisted-review@example.com",
+				"rating": 4.5,
+				"comment": "Saved review",
+			},
+		)
+
+	assert response.status_code == 201
+	with db.connect() as connection:
+		with connection.cursor() as cursor:
+			cursor.execute(
+				"""
+				SELECT u.email, reviews.rating, reviews.comment
+				FROM reviews
+			JOIN users AS u ON u.id = reviews.user_id
+				WHERE reviews.restaurant_id = %s
+				""",
+				(restaurant_id,),
+			)
+			persisted_review = cursor.fetchone()
+
+	assert persisted_review is not None
+	assert persisted_review[0] == "persisted-review@example.com"
+	assert float(persisted_review[1]) == 4.5
+	assert persisted_review[2] == "Saved review"
+
+
+def test_vote_is_persisted(initialized_test_database):
+	restaurant_id = _insert_restaurant()
+	with TestClient(main_module.app) as client:
+		review_response = client.post(
+			f"/restaurants/{restaurant_id}/reviews",
+			json={
+				"email": "vote-author@example.com",
+				"rating": 5,
+				"comment": "Worth a visit",
+			},
+		)
+		review_id = review_response.json()["id"]
+		vote_response = client.post(
+			f"/reviews/{review_id}/votes",
+			json={"email": "persisted-vote@example.com", "is_helpful": True},
+		)
+
+	assert review_response.status_code == 201
+	assert vote_response.status_code == 201
+	with db.connect() as connection:
+		with connection.cursor() as cursor:
+			cursor.execute(
+				"""
+				SELECT u.email, review_votes.is_helpful
+				FROM review_votes
+				JOIN users AS u ON u.id = review_votes.user_id
+				WHERE review_votes.review_id = %s
+				""",
+				(review_id,),
+			)
+			persisted_vote = cursor.fetchone()
+
+	assert persisted_vote == ("persisted-vote@example.com", True)

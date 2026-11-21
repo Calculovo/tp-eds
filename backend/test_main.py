@@ -195,6 +195,92 @@ def test_list_top_reviews_maps_review_and_computes_score(monkeypatch):
 	assert cursor.execute.call_args.args[1] == (9,)
 
 
+def test_search_users_maps_results_and_filters(monkeypatch):
+	cursor = _mock_database(monkeypatch)
+	cursor.fetchall.return_value = [(2, "sam", 4)]
+
+	result = main_module.search_users(name="sa", email="sam@example.com")
+
+	assert result == [{"id": 2, "username": "sam", "review_count": 4}]
+	assert cursor.execute.call_args.args[1] == (
+		"sa",
+		"%sa%",
+		"sam@example.com",
+		"sam@example.com",
+	)
+
+
+def test_create_or_get_user_returns_user_details(monkeypatch):
+	cursor = _mock_database(monkeypatch)
+	cursor.fetchone.return_value = ("sam",)
+	get_or_create_user = MagicMock(return_value=7)
+	monkeypatch.setattr(main_module, "get_or_create_user", get_or_create_user)
+	user = main_module.UserIn(email="sam@example.com")
+
+	result = main_module.create_or_get_user(user)
+
+	assert result == {"id": 7, "username": "sam"}
+	get_or_create_user.assert_called_once_with(cursor, "sam@example.com")
+	cursor.execute.assert_called_once_with(
+		"SELECT username FROM users WHERE id = %s", (7,)
+	)
+
+
+def test_get_user_profile_returns_following_status_and_reviews(monkeypatch):
+	cursor = _mock_database(monkeypatch)
+	cursor.fetchone.side_effect = [(5, "sam", 3, 2), (1,)]
+	cursor.fetchall.return_value = [
+		(8, 4, "Cafe", "cafe.jpg", 4.5, "Nice", 2, 1, True)
+	]
+
+	result = main_module.get_user_profile(user_id=5, viewer_id=9)
+
+	assert result == {
+		"id": 5,
+		"username": "sam",
+		"followers_count": 3,
+		"following_count": 2,
+		"is_following": True,
+		"reviews": [
+			{
+				"id": 8,
+				"restaurant_id": 4,
+				"restaurant_name": "Cafe",
+				"restaurant_image_url": "cafe.jpg",
+				"rating": 4.5,
+				"comment": "Nice",
+				"helpful_votes": 2,
+				"unhelpful_votes": 1,
+				"viewer_vote": True,
+			}
+		],
+	}
+	assert (9, 5) in [call.args[1] for call in cursor.execute.call_args_list]
+
+
+def test_get_user_profile_defaults_to_not_following_without_viewer(monkeypatch):
+	cursor = _mock_database(monkeypatch)
+	cursor.fetchone.return_value = (5, "sam", 3, 2)
+	cursor.fetchall.return_value = []
+
+	result = main_module.get_user_profile(user_id=5, viewer_id=None)
+
+	assert result["is_following"] is False
+	assert result["reviews"] == []
+	assert cursor.execute.call_count == 2
+
+
+def test_get_user_profile_raises_404_for_missing_user(monkeypatch):
+	cursor = _mock_database(monkeypatch)
+	cursor.fetchone.return_value = None
+
+	with pytest.raises(HTTPException) as error:
+		main_module.get_user_profile(user_id=404)
+
+	assert error.value.status_code == 404
+	assert error.value.detail == "Usuário não encontrado."
+
+
 def test_list_user_reviews_returns_review_data(monkeypatch):
 	cursor = _mock_database(monkeypatch)
 	cursor.fetchone.return_value = (1,)

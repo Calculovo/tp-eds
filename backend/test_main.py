@@ -6,15 +6,81 @@ from fastapi import HTTPException
 from backend import main as main_module
 
 
-def test_list_user_reviews_returns_review_data(monkeypatch):
+def _mock_database(monkeypatch):
 	connection = MagicMock()
 	connection.__enter__.return_value = connection
 	cursor = connection.cursor.return_value.__enter__.return_value
+	monkeypatch.setattr(main_module, "connect", MagicMock(return_value=connection))
+	return cursor
+
+
+def test_search_restaurants_maps_results_and_search_pattern(monkeypatch):
+	cursor = _mock_database(monkeypatch)
+	cursor.fetchall.return_value = [
+		(1, "Cafe", "Coffee", "cafe.jpg", 4.5, 2, 0, 0, 0, 1, 1),
+		(2, "New Cafe", "Bakery", None, None, 0, 0, 0, 0, 0, 0),
+	]
+
+	result = main_module.search_restaurants(name="Cafe")
+
+	assert result == [
+		{
+			"id": 1,
+			"name": "Cafe",
+			"category": "Coffee",
+			"image_url": "cafe.jpg",
+			"average_rating": 4.5,
+			"review_count": 2,
+			"rating_counts": [0, 0, 0, 1, 1],
+		},
+		{
+			"id": 2,
+			"name": "New Cafe",
+			"category": "Bakery",
+			"image_url": None,
+			"average_rating": None,
+			"review_count": 0,
+			"rating_counts": [0, 0, 0, 0, 0],
+		},
+	]
+	assert cursor.execute.call_args.args[1] == ("Cafe", "%Cafe%")
+
+
+def test_get_restaurant_returns_summary(monkeypatch):
+	cursor = _mock_database(monkeypatch)
+	cursor.fetchone.return_value = (4, "Cafe", "Coffee", "cafe.jpg", 4.0, 1, 0, 0, 0, 1, 0)
+
+	result = main_module.get_restaurant(restaurant_id=4)
+
+	assert result == {
+		"id": 4,
+		"name": "Cafe",
+		"category": "Coffee",
+		"image_url": "cafe.jpg",
+		"average_rating": 4.0,
+		"review_count": 1,
+		"rating_counts": [0, 0, 0, 1, 0],
+	}
+	assert cursor.execute.call_args.args[1] == (4,)
+
+
+def test_get_restaurant_raises_404_when_missing(monkeypatch):
+	cursor = _mock_database(monkeypatch)
+	cursor.fetchone.return_value = None
+
+	with pytest.raises(HTTPException) as error:
+		main_module.get_restaurant(restaurant_id=404)
+
+	assert error.value.status_code == 404
+	assert error.value.detail == "Restaurant not found"
+
+
+def test_list_user_reviews_returns_review_data(monkeypatch):
+	cursor = _mock_database(monkeypatch)
 	cursor.fetchone.return_value = (1,)
 	cursor.fetchall.return_value = [
 		(8, 4, "Cafe", "cafe.jpg", 4.5, "Nice", 2, 1, True)
 	]
-	monkeypatch.setattr(main_module, "connect", MagicMock(return_value=connection))
 
 	result = main_module.list_user_reviews(user_id=5, viewer_id=9)
 
@@ -35,11 +101,8 @@ def test_list_user_reviews_returns_review_data(monkeypatch):
 
 
 def test_list_user_reviews_raises_404_for_missing_user(monkeypatch):
-	connection = MagicMock()
-	connection.__enter__.return_value = connection
-	cursor = connection.cursor.return_value.__enter__.return_value
+	cursor = _mock_database(monkeypatch)
 	cursor.fetchone.return_value = None
-	monkeypatch.setattr(main_module, "connect", MagicMock(return_value=connection))
 
 	with pytest.raises(HTTPException) as error:
 		main_module.list_user_reviews(user_id=404, viewer_id=None)

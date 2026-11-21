@@ -372,3 +372,49 @@ def test_follow_list_handlers_delegate_to_relationship_helper(
 
 	assert result == [{"id": 7, "username": "alex"}]
 	get_relationships.assert_called_once_with(5, relationship)
+
+
+def test_follow_user_rejects_self_follow(monkeypatch):
+	connect = MagicMock()
+	monkeypatch.setattr(main_module, "connect", connect)
+
+	with pytest.raises(HTTPException) as error:
+		main_module.follow_user(user_id=5, follower_id=5)
+
+	assert error.value.status_code == 400
+	assert error.value.detail == "Não é possível seguir a si mesmo."
+	connect.assert_not_called()
+
+
+@pytest.mark.parametrize("fetch_results", [[None], [(5,), None]])
+def test_follow_user_returns_404_when_a_user_is_missing(monkeypatch, fetch_results):
+	cursor = _mock_database(monkeypatch)
+	cursor.fetchone.side_effect = fetch_results
+
+	with pytest.raises(HTTPException) as error:
+		main_module.follow_user(user_id=5, follower_id=9)
+
+	assert error.value.status_code == 404
+	assert error.value.detail == "Usuário não encontrado."
+	assert not any("INSERT INTO follows" in call.args[0] for call in cursor.execute.call_args_list)
+
+
+def test_follow_user_inserts_relationship_when_both_users_exist(monkeypatch):
+	cursor = _mock_database(monkeypatch)
+	cursor.fetchone.side_effect = [(5,), (9,)]
+
+	result = main_module.follow_user(user_id=5, follower_id=9)
+
+	assert result == {"ok": True}
+	assert cursor.execute.call_args.args[1] == (9, 5)
+	assert "INSERT INTO follows" in cursor.execute.call_args.args[0]
+
+
+def test_unfollow_user_deletes_relationship(monkeypatch):
+	cursor = _mock_database(monkeypatch)
+
+	result = main_module.unfollow_user(user_id=5, follower_id=9)
+
+	assert result == {"ok": True}
+	assert cursor.execute.call_args.args[1] == (9, 5)
+	assert "DELETE FROM follows" in cursor.execute.call_args.args[0]

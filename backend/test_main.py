@@ -75,6 +75,76 @@ def test_get_restaurant_raises_404_when_missing(monkeypatch):
 	assert error.value.detail == "Restaurant not found"
 
 
+def test_create_review_returns_404_for_missing_restaurant(monkeypatch):
+	cursor = _mock_database(monkeypatch)
+	cursor.fetchone.return_value = None
+	get_or_create_user = MagicMock(return_value=9)
+	monkeypatch.setattr(main_module, "get_or_create_user", get_or_create_user)
+	review = main_module.ReviewIn(
+		email="sam@example.com", rating=4.5, comment="Good"
+	)
+
+	with pytest.raises(HTTPException) as error:
+		main_module.create_review(restaurant_id=3, review=review)
+
+	assert error.value.status_code == 404
+	assert error.value.detail == "Restaurant not found"
+	get_or_create_user.assert_not_called()
+
+
+def test_create_review_inserts_review_and_commits(monkeypatch):
+	connection = MagicMock()
+	connection.__enter__.return_value = connection
+	cursor = connection.cursor.return_value.__enter__.return_value
+	cursor.fetchone.side_effect = [(3,), (21,)]
+	monkeypatch.setattr(main_module, "connect", MagicMock(return_value=connection))
+	get_or_create_user = MagicMock(return_value=9)
+	monkeypatch.setattr(main_module, "get_or_create_user", get_or_create_user)
+	review = main_module.ReviewIn(
+		email="sam@example.com", rating=4.5, comment="Good"
+	)
+
+	result = main_module.create_review(restaurant_id=3, review=review)
+
+	assert result == {"id": 21}
+	get_or_create_user.assert_called_once_with(cursor, "sam@example.com")
+	assert cursor.execute.call_args.args[1] == (9, 3, 4.5, "Good")
+	connection.commit.assert_called_once()
+
+
+def test_vote_review_returns_404_for_missing_review(monkeypatch):
+	cursor = _mock_database(monkeypatch)
+	cursor.fetchone.return_value = None
+	get_or_create_user = MagicMock(return_value=9)
+	monkeypatch.setattr(main_module, "get_or_create_user", get_or_create_user)
+	vote = main_module.VoteIn(email="sam@example.com", is_helpful=True)
+
+	with pytest.raises(HTTPException) as error:
+		main_module.vote_review(review_id=12, vote=vote)
+
+	assert error.value.status_code == 404
+	assert error.value.detail == "Review not found"
+	get_or_create_user.assert_not_called()
+
+
+def test_vote_review_upserts_vote_and_commits(monkeypatch):
+	connection = MagicMock()
+	connection.__enter__.return_value = connection
+	cursor = connection.cursor.return_value.__enter__.return_value
+	cursor.fetchone.return_value = (12,)
+	monkeypatch.setattr(main_module, "connect", MagicMock(return_value=connection))
+	get_or_create_user = MagicMock(return_value=9)
+	monkeypatch.setattr(main_module, "get_or_create_user", get_or_create_user)
+	vote = main_module.VoteIn(email="sam@example.com", is_helpful=False)
+
+	result = main_module.vote_review(review_id=12, vote=vote)
+
+	assert result == {"status": "ok"}
+	get_or_create_user.assert_called_once_with(cursor, "sam@example.com")
+	assert cursor.execute.call_args.args[1] == (12, 9, False)
+	connection.commit.assert_called_once()
+
+
 def test_list_user_reviews_returns_review_data(monkeypatch):
 	cursor = _mock_database(monkeypatch)
 	cursor.fetchone.return_value = (1,)

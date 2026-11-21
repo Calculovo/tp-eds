@@ -418,3 +418,77 @@ def test_unfollow_user_deletes_relationship(monkeypatch):
 	assert result == {"ok": True}
 	assert cursor.execute.call_args.args[1] == (9, 5)
 	assert "DELETE FROM follows" in cursor.execute.call_args.args[0]
+
+
+def test_reset_password_updates_existing_user(monkeypatch):
+	connection = MagicMock()
+	connection.__enter__.return_value = connection
+	cursor = connection.cursor.return_value.__enter__.return_value
+	cursor.fetchone.return_value = (5,)
+	monkeypatch.setattr(main_module, "connect", MagicMock(return_value=connection))
+	payload = main_module.ResetPasswordIn(
+		email="sam@example.com", novaSenha="new-password"
+	)
+
+	result = main_module.reset_password(payload)
+
+	assert result == {
+		"status": "ok",
+		"message": "Senha atualizada com sucesso no banco de dados.",
+	}
+	assert cursor.execute.call_args.args[1] == ("new-password", "sam@example.com")
+	connection.commit.assert_called_once()
+
+
+def test_reset_password_returns_404_for_unknown_email(monkeypatch):
+	cursor = _mock_database(monkeypatch)
+	cursor.fetchone.return_value = None
+	payload = main_module.ResetPasswordIn(
+		email="missing@example.com", novaSenha="new-password"
+	)
+
+	with pytest.raises(HTTPException) as error:
+		main_module.reset_password(payload)
+
+	assert error.value.status_code == 404
+	assert error.value.detail == "Usuário não encontrado no servidor."
+
+
+def test_update_username_rejects_duplicate_name(monkeypatch):
+	cursor = _mock_database(monkeypatch)
+	cursor.fetchone.return_value = (7,)
+	payload = main_module.UpdateUsernameIn(username="taken")
+
+	with pytest.raises(HTTPException) as error:
+		main_module.update_username(user_id=5, payload=payload)
+
+	assert error.value.status_code == 400
+	assert error.value.detail == "Este nome de usuário já está em uso."
+	assert cursor.execute.call_count == 1
+
+
+def test_update_username_returns_404_for_missing_user(monkeypatch):
+	cursor = _mock_database(monkeypatch)
+	cursor.fetchone.side_effect = [None, None]
+	payload = main_module.UpdateUsernameIn(username="newname")
+
+	with pytest.raises(HTTPException) as error:
+		main_module.update_username(user_id=404, payload=payload)
+
+	assert error.value.status_code == 404
+	assert error.value.detail == "Usuário não encontrado."
+
+
+def test_update_username_saves_available_name(monkeypatch):
+	connection = MagicMock()
+	connection.__enter__.return_value = connection
+	cursor = connection.cursor.return_value.__enter__.return_value
+	cursor.fetchone.side_effect = [None, (5,)]
+	monkeypatch.setattr(main_module, "connect", MagicMock(return_value=connection))
+	payload = main_module.UpdateUsernameIn(username="newname")
+
+	result = main_module.update_username(user_id=5, payload=payload)
+
+	assert result == {"status": "ok", "username": "newname"}
+	assert cursor.execute.call_args.args[1] == ("newname", 5)
+	connection.commit.assert_called_once()

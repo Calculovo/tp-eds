@@ -315,3 +315,60 @@ def test_list_user_reviews_raises_404_for_missing_user(monkeypatch):
 
 	assert error.value.status_code == 404
 	assert error.value.detail == "Usuário não encontrado."
+
+
+@pytest.mark.parametrize(
+	("relationship", "join_fragment", "filter_fragment"),
+	[
+		("followers", "u.id = f.follower_id", "f.followed_id = %s"),
+		("following", "u.id = f.followed_id", "f.follower_id = %s"),
+	],
+)
+def test_list_follow_relationships_returns_users(
+	monkeypatch, relationship, join_fragment, filter_fragment
+):
+	cursor = _mock_database(monkeypatch)
+	cursor.fetchone.return_value = (5,)
+	cursor.fetchall.return_value = [(7, "alex"), (9, "jules")]
+
+	result = main_module._list_follow_relationships(5, relationship)
+
+	assert result == [
+		{"id": 7, "username": "alex"},
+		{"id": 9, "username": "jules"},
+	]
+	query_call = cursor.execute.call_args_list[1]
+	assert join_fragment in query_call.args[0]
+	assert filter_fragment in query_call.args[0]
+	assert query_call.args[1] == (5,)
+
+
+def test_list_follow_relationships_raises_404_for_missing_user(monkeypatch):
+	cursor = _mock_database(monkeypatch)
+	cursor.fetchone.return_value = None
+
+	with pytest.raises(HTTPException) as error:
+		main_module._list_follow_relationships(404, "followers")
+
+	assert error.value.status_code == 404
+	assert error.value.detail == "Usuário não encontrado."
+	assert cursor.execute.call_count == 1
+
+
+@pytest.mark.parametrize(
+	("handler", "relationship"),
+	[
+		(main_module.list_user_followers, "followers"),
+		(main_module.list_user_following, "following"),
+	],
+)
+def test_follow_list_handlers_delegate_to_relationship_helper(
+	monkeypatch, handler, relationship
+):
+	get_relationships = MagicMock(return_value=[{"id": 7, "username": "alex"}])
+	monkeypatch.setattr(main_module, "_list_follow_relationships", get_relationships)
+
+	result = handler(user_id=5)
+
+	assert result == [{"id": 7, "username": "alex"}]
+	get_relationships.assert_called_once_with(5, relationship)

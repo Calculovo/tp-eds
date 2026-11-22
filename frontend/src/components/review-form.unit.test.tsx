@@ -88,3 +88,80 @@ describe('edição e envio de avaliações', () => {
     await user.click(screen.getByRole('button', { name: 'Salvar avaliação' }))
     expect(await screen.findByRole('alert')).toHaveTextContent(
       'Não foi possível salvar sua avaliação.',
+    )
+  })
+
+  it('fecha pelo Escape quando não está salvando', () => {
+    const onFechar = vi.fn()
+    render(
+      <AvaliarRestaurante
+        restaurante={restaurante}
+        email="ana@example.com"
+        onFechar={onFechar}
+        onSalvo={vi.fn()}
+      />,
+    )
+
+    fireEvent.keyDown(window, { key: 'Escape' })
+    expect(onFechar).toHaveBeenCalledOnce()
+  })
+})
+
+describe('votos de avaliações', () => {
+  it('envia voto útil e permite abrir a edição própria', async () => {
+    const user = userEvent.setup()
+    const onVotoRegistrado = vi.fn()
+    const onEditarAvaliacao = vi.fn()
+    vi.mocked(fetch).mockResolvedValue({ ok: true } as Response)
+    render(
+      <BotoesVotoReview
+        reviewId={21}
+        email="ana@example.com"
+        helpfulVotes={2}
+        unhelpfulVotes={1}
+        viewerVote={null}
+        onVotoRegistrado={onVotoRegistrado}
+        onEditarAvaliacao={onEditarAvaliacao}
+      />,
+    )
+
+    await user.click(
+      screen.getByRole('button', { name: 'Marcar avaliação como útil' }),
+    )
+    await waitFor(() => expect(onVotoRegistrado).toHaveBeenCalledWith(21, true))
+    expect(fetch).toHaveBeenCalledWith('/api/reviews/21/votes', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: 'ana@example.com', is_helpful: true }),
+    })
+    await user.click(screen.getByRole('button', { name: 'Editar avaliação' }))
+    expect(onEditarAvaliacao).toHaveBeenCalledOnce()
+  })
+
+  it('mostra erro ao falhar o voto e omite edição de reviews alheias', async () => {
+    const user = userEvent.setup()
+    vi.mocked(fetch).mockRejectedValue(new Error('offline'))
+    render(
+      <BotoesVotoReview
+        reviewId={21}
+        email="ana@example.com"
+        helpfulVotes={0}
+        unhelpfulVotes={0}
+        viewerVote={false}
+        onVotoRegistrado={vi.fn()}
+      />,
+    )
+
+    const voteButton = screen.getByRole('button', {
+      name: 'Marcar avaliação como não útil',
+    })
+    expect(voteButton).toHaveAttribute('aria-pressed', 'true')
+    await user.click(voteButton)
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'Não foi possível registrar seu voto.',
+    )
+    expect(
+      screen.queryByRole('button', { name: 'Editar avaliação' }),
+    ).not.toBeInTheDocument()
+  })
+})

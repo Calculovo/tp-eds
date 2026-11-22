@@ -178,3 +178,99 @@ describe('integração da aplicação autenticada', () => {
     const review = screen.getByRole('article')
     await user.click(within(review).getByRole('button', { name: 'Editar avaliação' }))
     const editor = within(screen.getByRole('dialog'))
+    expect(editor.getByLabelText('Sua avaliação')).toHaveValue('Excelente café')
+    expect(editor.getByRole('button', { name: '5 estrelas' })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    )
+    await user.clear(editor.getByLabelText('Sua avaliação'))
+    await user.type(editor.getByLabelText('Sua avaliação'), 'Atualizada')
+    await user.click(editor.getByRole('button', { name: 'Salvar avaliação' }))
+
+    expect(await screen.findByText('Atualizada', { exact: true })).toBeVisible()
+    expect(reviews).toHaveLength(1)
+    expect(reviews[0].comment).toBe('Atualizada')
+    expect(
+      requests.some(
+        ({ url, init }) =>
+          url === '/api/restaurants/8/reviews' && init?.method === 'POST',
+      ),
+    ).toBe(true)
+  })
+
+  it('abre o perfil próprio, edita uma review e retorna à página do restaurante', async () => {
+    const user = userEvent.setup()
+    reviews.push({
+      id: 13,
+      user_id: 1,
+      username: 'ana',
+      email: 'ana@example.com',
+      rating: 3,
+      comment: 'Antes',
+      helpful_votes: 0,
+      unhelpful_votes: 0,
+      viewer_vote: null,
+    })
+    render(<App />)
+    await login()
+    await user.click(screen.getByRole('button', { name: 'Meu perfil' }))
+    await user.click(await screen.findByRole('button', { name: 'Editar avaliação' }))
+
+    const editor = within(await screen.findByRole('dialog'))
+    expect(editor.getByLabelText('Sua avaliação')).toHaveValue('Antes')
+    await user.clear(editor.getByLabelText('Sua avaliação'))
+    await user.type(editor.getByLabelText('Sua avaliação'), 'Pelo perfil')
+    await user.click(editor.getByRole('button', { name: 'Salvar avaliação' }))
+    expect(await screen.findByRole('button', { name: 'Voltar aos resultados' })).toBeVisible()
+    expect(reviews).toHaveLength(1)
+    fireEvent.click(screen.getByRole('button', { name: 'Voltar aos resultados' }))
+    expect(await screen.findByRole('heading', { name: 'ana' })).toBeVisible()
+  })
+
+  it('a busca de restaurante no perfil retorna à home e aplica o termo', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+    await login()
+    await user.click(screen.getByRole('button', { name: 'Meu perfil' }))
+    await screen.findByRole('heading', { name: 'ana' })
+    await user.type(
+      screen.getByRole('searchbox', { name: 'Busque um restaurante' }),
+      'Cafe',
+    )
+    await user.click(screen.getByRole('button', { name: 'Buscar restaurante' }))
+
+    expect(await screen.findByRole('heading', { name: 'Restaurantes' })).toBeVisible()
+    await waitFor(() => {
+      expect(requests).toContainEqual(
+        expect.objectContaining({ url: '/api/restaurants?name=Cafe' }),
+      )
+    })
+  })
+
+  it('busca e abre um perfil e volta à página inicial pela logo', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+    await login()
+    await user.type(screen.getByRole('searchbox', { name: 'Busque um usuário' }), 'ana')
+    await user.click(screen.getByRole('button', { name: 'Buscar usuário' }))
+    await user.click(await screen.findByRole('button', { name: /^ana/ }))
+    expect(await screen.findByRole('heading', { name: 'ana' })).toBeVisible()
+
+    await user.click(screen.getByRole('button', { name: 'Ir para a página inicial' }))
+    expect(await screen.findByRole('heading', { name: 'Restaurantes' })).toBeVisible()
+  })
+
+  it('mostra erro se a API não aceitar a criação da sessão', async () => {
+    const user = userEvent.setup()
+    vi.mocked(fetch).mockImplementation(async (input, init) =>
+      String(input) === '/api/users' && init?.method === 'POST'
+        ? response({ detail: 'offline' }, false)
+        : response([], true),
+    )
+    render(<App />)
+    await user.type(screen.getByLabelText('E-mail'), 'ana@example.com')
+    await user.type(screen.getByLabelText('Senha'), 'senha')
+    await user.click(screen.getByRole('button', { name: 'Entrar' }))
+    expect(await screen.findByText('Não foi possível conectar ao servidor. Tente novamente.')).toBeVisible()
+  })
+})

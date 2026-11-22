@@ -273,3 +273,13 @@ describe('busca de usuários', () => {
     const input = screen.getByRole('searchbox', { name: 'Busque um usuário' })
     await user.type(input, 'ninguém')
     await user.click(screen.getByRole('button', { name: 'Buscar usuário' }))
+    expect(await screen.findByText('Nenhum usuário encontrado.')).toBeVisible()
+
+    await user.clear(input)
+    await user.type(input, 'falha')
+    await user.click(screen.getByRole('button', { name: 'Buscar usuário' }))
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'Não foi possível buscar usuários.',
+    )
+  })
+})

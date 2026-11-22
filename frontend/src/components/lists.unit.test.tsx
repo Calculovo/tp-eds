@@ -178,3 +178,98 @@ describe('reviews em destaque', () => {
         ? ({ ok: true, json: async () => [destaque] } as Response)
         : ({ ok: true, json: async () => ({}) } as Response),
     )
+    render(
+      <TopReviews
+        email="ana@example.com"
+        viewerId={null}
+        onSelecionarUsuario={vi.fn()}
+        onSelecionarRestaurante={vi.fn()}
+      />,
+    )
+
+    await user.click(
+      await screen.findByRole('button', { name: 'Marcar avaliação como útil' }),
+    )
+    await waitFor(() => {
+      expect(fetch).toHaveBeenCalledWith(
+        '/api/reviews/3/votes',
+        expect.objectContaining({ method: 'POST' }),
+      )
+      expect(fetch).toHaveBeenCalledTimes(3)
+    })
+  })
+})
+
+describe('lista de seguidores e seguindo', () => {
+  it('mostra usuários, abre perfil e fecha lista', async () => {
+    const user = userEvent.setup()
+    const aoSelecionarUsuario = vi.fn()
+    const aoFechar = vi.fn()
+    vi.mocked(fetch).mockResolvedValue({
+      ok: true,
+      json: async () => [{ id: 9, username: 'caio' }],
+    } as Response)
+    render(
+      <ListaRelacoes
+        userId={6}
+        tipo="followers"
+        aoSelecionarUsuario={aoSelecionarUsuario}
+        aoFechar={aoFechar}
+      />,
+    )
+
+    await user.click(await screen.findByRole('button', { name: 'caio' }))
+    await user.click(screen.getByRole('button', { name: 'Fechar' }))
+    expect(aoSelecionarUsuario).toHaveBeenCalledWith(9)
+    expect(aoFechar).toHaveBeenCalledOnce()
+    expect(screen.getByText('Seguidores')).toBeInTheDocument()
+  })
+
+  it('exibe lista vazia e falha da API', async () => {
+    vi.mocked(fetch)
+      .mockResolvedValueOnce({ ok: true, json: async () => [] } as Response)
+      .mockResolvedValueOnce({ ok: false } as Response)
+    const props = {
+      userId: 6,
+      aoSelecionarUsuario: vi.fn(),
+      aoFechar: vi.fn(),
+    }
+    const { rerender } = render(<ListaRelacoes {...props} tipo="following" />)
+    expect(await screen.findByText('Nenhum usuário nesta lista.')).toBeVisible()
+
+    rerender(<ListaRelacoes {...props} tipo="followers" />)
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'Não foi possível carregar esta lista.',
+    )
+  })
+})
+
+describe('busca de usuários', () => {
+  it('lista matches, seleciona um perfil e limpa a consulta', async () => {
+    const user = userEvent.setup()
+    const onSelecionarUsuario = vi.fn()
+    vi.mocked(fetch).mockResolvedValue({
+      ok: true,
+      json: async () => [{ id: 12, username: 'bia lima', review_count: 3 }],
+    } as Response)
+    render(<BuscaUsuarios onSelecionarUsuario={onSelecionarUsuario} />)
+
+    await user.type(screen.getByRole('searchbox', { name: 'Busque um usuário' }), 'bia')
+    await user.click(screen.getByRole('button', { name: 'Buscar usuário' }))
+    await user.click(await screen.findByRole('button', { name: /bia lima/ }))
+    expect(onSelecionarUsuario).toHaveBeenCalledWith(12)
+    expect(fetch).toHaveBeenCalledWith('/api/users?name=bia')
+
+    await user.clear(screen.getByRole('searchbox', { name: 'Busque um usuário' }))
+    expect(screen.queryByText('bia lima')).not.toBeInTheDocument()
+  })
+
+  it('mostra nenhum resultado e erro da busca', async () => {
+    const user = userEvent.setup()
+    vi.mocked(fetch)
+      .mockResolvedValueOnce({ ok: true, json: async () => [] } as Response)
+      .mockResolvedValueOnce({ ok: false } as Response)
+    render(<BuscaUsuarios onSelecionarUsuario={vi.fn()} />)
+    const input = screen.getByRole('searchbox', { name: 'Busque um usuário' })
+    await user.type(input, 'ninguém')
+    await user.click(screen.getByRole('button', { name: 'Buscar usuário' }))

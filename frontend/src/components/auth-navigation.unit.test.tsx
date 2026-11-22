@@ -88,3 +88,65 @@ describe('formulários de conta', () => {
     expect(onIrParaCadastro).toHaveBeenCalledOnce()
   })
 })
+
+describe('navegação autenticada', () => {
+  it('aciona logo, buscas, perfil e saída', async () => {
+    const user = userEvent.setup()
+    const handlers = {
+      onBuscaRestauranteChange: vi.fn(),
+      onBuscarRestaurante: vi.fn(),
+      onSelecionarUsuario: vi.fn(),
+      onIrParaInicio: vi.fn(),
+      onMeuPerfil: vi.fn(),
+      onLogout: vi.fn(),
+    }
+    vi.mocked(fetch).mockResolvedValue({
+      ok: true,
+      json: async () => [{ id: 8, username: 'bia', review_count: 2 }],
+    } as Response)
+    render(
+      <NavegacaoLogada
+        email="ana@example.com"
+        viewerId={4}
+        buscaRestaurante="  Cafe  "
+        {...handlers}
+      />,
+    )
+
+    await user.click(screen.getByRole('button', { name: 'Ir para a página inicial' }))
+    fireEvent.change(
+      screen.getByRole('searchbox', { name: 'Busque um restaurante' }),
+      { target: { value: '  Cafe  novo' } },
+    )
+    await user.click(screen.getByRole('button', { name: 'Buscar restaurante' }))
+    expect(handlers.onBuscarRestaurante).toHaveBeenCalledWith('Cafe')
+    expect(handlers.onBuscaRestauranteChange).toHaveBeenCalled()
+
+    await user.type(screen.getByRole('searchbox', { name: 'Busque um usuário' }), 'bia')
+    await user.click(screen.getByRole('button', { name: 'Buscar usuário' }))
+    await user.click(await screen.findByRole('button', { name: /bia/ }))
+    expect(handlers.onSelecionarUsuario).toHaveBeenCalledWith(8)
+
+    await user.click(screen.getByRole('button', { name: 'Meu perfil' }))
+    await user.click(screen.getByRole('button', { name: 'Sair' }))
+    expect(handlers.onMeuPerfil).toHaveBeenCalledOnce()
+    expect(handlers.onLogout).toHaveBeenCalledOnce()
+  })
+
+  it('desativa meu perfil enquanto o usuário ainda não foi carregado', () => {
+    render(
+      <NavegacaoLogada
+        email="ana@example.com"
+        viewerId={null}
+        buscaRestaurante=""
+        onBuscaRestauranteChange={vi.fn()}
+        onBuscarRestaurante={vi.fn()}
+        onSelecionarUsuario={vi.fn()}
+        onIrParaInicio={vi.fn()}
+        onMeuPerfil={vi.fn()}
+        onLogout={vi.fn()}
+      />,
+    )
+    expect(screen.getByRole('button', { name: 'Meu perfil' })).toBeDisabled()
+  })
+})

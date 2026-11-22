@@ -88,3 +88,93 @@ describe('busca e lista de restaurantes', () => {
     rerender(
       <ListaRestaurantes
         email="ana@example.com"
+        viewerId={null}
+        consulta="vazio"
+        onSelecionarRestaurante={vi.fn()}
+        onSelecionarRestaurantePorId={vi.fn()}
+        onSelecionarUsuario={vi.fn()}
+        erroCarregamentoRestaurante=""
+      />,
+    )
+    await waitFor(() => {
+      expect(screen.getByText('Nenhum restaurante encontrado.')).toBeVisible()
+    })
+  })
+})
+
+describe('reviews em destaque', () => {
+  it('liga para perfil e restaurante a partir de uma review', async () => {
+    const user = userEvent.setup()
+    const onSelecionarUsuario = vi.fn()
+    const onSelecionarRestaurante = vi.fn()
+    vi.mocked(fetch).mockResolvedValue({
+      ok: true,
+      json: async () => [
+        {
+          id: 3,
+          user_id: 7,
+          restaurant_id: 2,
+          username: 'bia',
+          restaurant_name: 'Café Central',
+          rating: 4.5,
+          comment: 'Excelente',
+          helpful_votes: 2,
+          unhelpful_votes: 1,
+          viewer_vote: null,
+        },
+      ],
+    } as Response)
+    render(
+      <TopReviews
+        email="ana@example.com"
+        viewerId={4}
+        onSelecionarUsuario={onSelecionarUsuario}
+        onSelecionarRestaurante={onSelecionarRestaurante}
+      />,
+    )
+
+    await user.click(await screen.findByRole('button', { name: /Café Central/ }))
+    await user.click(screen.getByRole('button', { name: 'bia' }))
+    expect(onSelecionarRestaurante).toHaveBeenCalledWith(2)
+    expect(onSelecionarUsuario).toHaveBeenCalledWith(7)
+    expect(fetch).toHaveBeenCalledWith('/api/reviews/top?viewer_id=4')
+  })
+
+  it('mostra lista vazia e erro de carregamento', async () => {
+    vi.mocked(fetch)
+      .mockResolvedValueOnce({ ok: true, json: async () => [] } as Response)
+      .mockResolvedValueOnce({ ok: false } as Response)
+    const props = {
+      email: 'ana@example.com',
+      viewerId: null,
+      onSelecionarUsuario: vi.fn(),
+      onSelecionarRestaurante: vi.fn(),
+    }
+    const { rerender } = render(<TopReviews {...props} />)
+    expect(await screen.findByText('Ainda não há reviews para exibir.')).toBeVisible()
+
+    rerender(<TopReviews {...props} viewerId={8} />)
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'Não foi possível carregar as reviews em destaque.',
+    )
+  })
+
+  it('registra voto e recarrega o ranking', async () => {
+    const user = userEvent.setup()
+    const destaque = {
+      id: 3,
+      user_id: 7,
+      restaurant_id: 2,
+      username: 'bia',
+      restaurant_name: 'Café Central',
+      rating: 4.5,
+      comment: 'Excelente',
+      helpful_votes: 2,
+      unhelpful_votes: 1,
+      viewer_vote: null,
+    }
+    vi.mocked(fetch).mockImplementation(async (input) =>
+      String(input) === '/api/reviews/top'
+        ? ({ ok: true, json: async () => [destaque] } as Response)
+        : ({ ok: true, json: async () => ({}) } as Response),
+    )

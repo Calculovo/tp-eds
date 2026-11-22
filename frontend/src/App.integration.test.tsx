@@ -88,3 +88,93 @@ function mockRestaurantApi() {
             email: body.email,
             rating: body.rating,
             comment: body.comment,
+            helpful_votes: 0,
+            unhelpful_votes: 0,
+            viewer_vote: null,
+          })
+        }
+        restaurant.average_rating =
+          reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length
+        restaurant.review_count = reviews.length
+        restaurant.rating_counts = [0, 0, 0, 0, 0]
+        restaurant.rating_counts[Math.round(body.rating) - 1] = reviews.length
+        return response({ id: existing?.id ?? reviews.at(-1)?.id })
+      }
+      if (parsed.pathname === '/api/users/1') {
+        return response({
+          id: 1,
+          username: 'ana',
+          followers_count: 0,
+          following_count: 0,
+          is_following: false,
+          reviews: reviews.map((review) => ({
+            ...review,
+            restaurant_id: 8,
+            restaurant_name: restaurant.name,
+            restaurant_image_url: restaurant.image_url,
+          })),
+        })
+      }
+      return response({ detail: 'not found' }, false)
+    }),
+  )
+}
+
+async function login() {
+  const user = userEvent.setup()
+  await user.type(screen.getByLabelText('E-mail'), 'ana@example.com')
+  await user.type(screen.getByLabelText('Senha'), 'senha')
+  await user.click(screen.getByRole('button', { name: 'Entrar' }))
+  await screen.findByRole('searchbox', { name: 'Busque um restaurante' })
+}
+
+beforeEach(() => {
+  reviews = []
+  requests = []
+  restaurant.average_rating = null
+  restaurant.review_count = 0
+  restaurant.rating_counts = [0, 0, 0, 0, 0]
+  cadastrarUsuario('Ana', 'Lima', 'ana@example.com', 'senha')
+  mockRestaurantApi()
+})
+
+describe('integração da aplicação autenticada', () => {
+  it('cadastra usuário pela interface e então permite entrar', async () => {
+    const user = userEvent.setup()
+    localStorage.clear()
+    render(<App />)
+    await user.click(screen.getByRole('button', { name: 'Não tem conta? Cadastre-se' }))
+    await user.type(screen.getByLabelText('Nome'), 'Ana')
+    await user.type(screen.getByLabelText('Sobrenome'), 'Lima')
+    await user.type(screen.getByLabelText('E-mail'), 'ana@example.com')
+    await user.type(screen.getByLabelText('Senha'), 'senha')
+    await user.click(screen.getByRole('button', { name: 'Cadastrar' }))
+    expect(await screen.findByText('Entrar', { selector: 'p' })).toBeVisible()
+
+    await login()
+    expect(screen.getByRole('button', { name: 'Meu perfil' })).toBeEnabled()
+    expect(requests).toContainEqual(
+      expect.objectContaining({
+        url: '/api/users',
+        init: expect.objectContaining({ method: 'POST' }),
+      }),
+    )
+  })
+
+  it('cria e edita uma review pela página do restaurante', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+    await login()
+    await user.click(await screen.findByRole('button', { name: /Café Central/ }))
+    await user.click(await screen.findByRole('button', { name: 'Avaliar este restaurante' }))
+
+    const dialog = within(screen.getByRole('dialog'))
+    await user.type(dialog.getByLabelText('Sua avaliação'), 'Excelente café')
+    await user.click(dialog.getByRole('button', { name: '5 estrelas' }))
+    await user.click(dialog.getByRole('button', { name: 'Salvar avaliação' }))
+    expect(await screen.findByText('Excelente café', { exact: true })).toBeVisible()
+    expect(reviews).toHaveLength(1)
+
+    const review = screen.getByRole('article')
+    await user.click(within(review).getByRole('button', { name: 'Editar avaliação' }))
+    const editor = within(screen.getByRole('dialog'))

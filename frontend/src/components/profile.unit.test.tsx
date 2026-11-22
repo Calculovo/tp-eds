@@ -178,3 +178,35 @@ describe('perfil e histórico de avaliações', () => {
   })
 
   it('fecha a edição sem pedido se o nome não mudou e mostra erro do servidor', async () => {
+    const user = userEvent.setup()
+    vi.mocked(fetch)
+      .mockResolvedValueOnce({ ok: true, json: async () => profile } as Response)
+      .mockResolvedValueOnce({
+        ok: false,
+        json: async () => ({ detail: 'Nome indisponível' }),
+      } as Response)
+    render(
+      <PerfilUsuario
+        userId={5}
+        viewerId={5}
+        email="ana@example.com"
+        onVoltar={vi.fn()}
+        onSelecionarUsuario={vi.fn()}
+        onSelecionarRestaurante={vi.fn()}
+        onEditarAvaliacao={vi.fn()}
+        erroCarregamentoRestaurante=""
+      />,
+    )
+
+    await user.click(await screen.findByRole('button', { name: 'Editar Nome' }))
+    await user.click(screen.getByRole('button', { name: 'Salvar' }))
+    expect(await screen.findByRole('heading', { name: 'ana' })).toBeVisible()
+    expect(fetch).toHaveBeenCalledTimes(1)
+
+    await user.click(screen.getByRole('button', { name: 'Editar Nome' }))
+    await user.clear(screen.getByRole('textbox'))
+    await user.type(screen.getByRole('textbox'), 'novo nome')
+    await user.click(screen.getByRole('button', { name: 'Salvar' }))
+    expect(await screen.findByText('Nome indisponível')).toBeVisible()
+  })
+})

@@ -13,6 +13,20 @@ Os dados de exemplo de `backend/seed.py` são inseridos automaticamente na inici
 
 Para encerrar os serviços, pressione `Ctrl+C`. Para também remover os containers, execute `docker compose down`.
 
+## Testes do frontend
+
+Os testes de unidade usam Vitest e React Testing Library em jsdom. Os testes de integração renderizam o aplicativo e simulam as respostas da API, sem precisar iniciar o PostgreSQL ou o backend.
+
+```sh
+cd frontend
+npm install
+npm run test:unit
+npm run test:integration
+npm run test:coverage
+```
+
+`npm run test:coverage` executa as duas suítes e exige pelo menos 80% de cobertura em linhas, instruções, funções e branches. O relatório HTML é gerado em `frontend/coverage/`.
+
 ## Membros
 - Camila de Almeida Ribeiro (backend)
 - Emerson Araújo Simões (full)

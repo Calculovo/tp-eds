@@ -245,25 +245,25 @@ Na raiz do repositório:
 
 ```powershell
 cd frontend
-npm install
+npm.cmd install
 ```
 
 Testes unitários:
 
 ```powershell
-npm run test:unit
+npm.cmd run test:unit
 ```
 
 Testes de integração:
 
 ```powershell
-npm run test:integration
+npm.cmd run test:integration
 ```
 
 Coverage do frontend (executa as duas suítes, exige 80% em linhas, instruções, funções e branches e gera HTML em `frontend/coverage/`):
 
 ```powershell
-npm run test:coverage
+npm.cmd run test:coverage
 ```
 
 ### E2E

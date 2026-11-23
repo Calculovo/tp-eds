@@ -12,6 +12,7 @@ dist
 dist-ssr
 *.local
 /frontend/coverage/
+/backend/htmlcov/
 
 .venv/
 venv/

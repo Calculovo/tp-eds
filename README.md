@@ -199,6 +199,80 @@ classDiagram
 ```mermaid
 sequenceDiagram
     actor User as Usuário
+
+## Como rodar os testes
+
+### Backend
+
+Na raiz do repositório, instale as dependências de teste:
+
+```powershell
+python -m pip install -r backend\requirements-test.txt
+```
+
+Testes unitários (não precisam do PostgreSQL):
+
+```powershell
+python -m pytest backend\test_backend.py backend\test_main.py
+```
+
+Testes de integração (requerem Docker Desktop):
+
+```powershell
+docker compose --profile test up -d test-db
+$env:TEST_DATABASE_URL = "postgresql://restaurank_test:restaurank_test@localhost:5433/restaurank_test"
+python -m pytest backend\test_integration.py
+```
+
+Coverage do backend (executa unitários e integração, mede linhas e branches, exige no mínimo 80% e gera HTML em `backend/htmlcov/`):
+
+```powershell
+$env:TEST_DATABASE_URL = "postgresql://restaurank_test:restaurank_test@localhost:5433/restaurank_test"
+python -m pytest backend\test_backend.py backend\test_main.py backend\test_integration.py `
+  --cov=backend.main --cov=backend.db --cov=backend.seed `
+  --cov-branch `
+  --cov-report=term-missing --cov-report=html:backend/htmlcov `
+  --cov-fail-under=80
+```
+
+O banco de testes é separado do banco de desenvolvimento. Ao terminar os testes de integração ou coverage, ele pode ser parado com `docker compose --profile test stop test-db`.
+
+### Frontend
+
+Na raiz do repositório:
+
+```powershell
+cd frontend
+npm install
+```
+
+Testes unitários:
+
+```powershell
+npm run test:unit
+```
+
+Testes de integração:
+
+```powershell
+npm run test:integration
+```
+
+Coverage do frontend (executa as duas suítes, exige 80% em linhas, instruções, funções e branches e gera HTML em `frontend/coverage/`):
+
+```powershell
+npm run test:coverage
+```
+
+### E2E
+
+Na raiz do repositório, com o Docker Desktop instalado e em execução:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\run-e2e.ps1
+```
+
+O script prepara pytest/Playwright e Chromium quando necessário, inicia banco, API e frontend e executa os testes no navegador. Os serviços ficam ativos ao final; para encerrá-los, use `docker compose down`.
     participant App as React App
     participant API as FastAPI
     participant DB as PostgreSQL

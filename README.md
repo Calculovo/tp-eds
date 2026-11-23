@@ -204,16 +204,17 @@ sequenceDiagram
 
 ### Backend
 
-Na raiz do repositório, instale as dependências de teste:
+Na raiz do repositório, crie o ambiente virtual uma vez, se ainda não existir, e instale as dependências de teste:
 
 ```powershell
-python -m pip install -r backend\requirements-test.txt
+if (-not (Test-Path .\.venv\Scripts\python.exe)) { py -3 -m venv .venv }
+.\.venv\Scripts\python.exe -m pip install -r backend\requirements-test.txt
 ```
 
 Testes unitários (não precisam do PostgreSQL):
 
 ```powershell
-python -m pytest backend\test_backend.py backend\test_main.py
+.\.venv\Scripts\python.exe -m pytest backend\test_backend.py backend\test_main.py
 ```
 
 Testes de integração (requerem Docker Desktop):
@@ -221,14 +222,15 @@ Testes de integração (requerem Docker Desktop):
 ```powershell
 docker compose --profile test up -d test-db
 $env:TEST_DATABASE_URL = "postgresql://restaurank_test:restaurank_test@localhost:5433/restaurank_test"
-python -m pytest backend\test_integration.py
+.\.venv\Scripts\python.exe -m pytest backend\test_integration.py
 ```
 
 Coverage do backend (executa unitários e integração, mede linhas e branches, exige no mínimo 80% e gera HTML em `backend/htmlcov/`):
 
 ```powershell
+docker compose --profile test up -d test-db
 $env:TEST_DATABASE_URL = "postgresql://restaurank_test:restaurank_test@localhost:5433/restaurank_test"
-python -m pytest backend\test_backend.py backend\test_main.py backend\test_integration.py `
+.\.venv\Scripts\python.exe -m pytest backend\test_backend.py backend\test_main.py backend\test_integration.py `
   --cov=backend.main --cov=backend.db --cov=backend.seed `
   --cov-branch `
   --cov-report=term-missing --cov-report=html:backend/htmlcov `

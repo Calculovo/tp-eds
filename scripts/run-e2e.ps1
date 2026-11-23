@@ -8,11 +8,16 @@ Push-Location $repoRoot
 try {
     if (-not (Test-Path $python)) {
         $systemPython = Get-Command python -ErrorAction SilentlyContinue
-        if (-not $systemPython) {
-            throw 'Python is required. Install Python and make sure "python" is on PATH.'
+        $pythonLauncher = Get-Command py -ErrorAction SilentlyContinue
+        if ($systemPython) {
+            & $systemPython.Source -m venv $venvPath
         }
-
-        & $systemPython.Source -m venv $venvPath
+        elseif ($pythonLauncher) {
+            & $pythonLauncher.Source -3 -m venv $venvPath
+        }
+        else {
+            throw 'Python is required. Install Python and make sure the "py" launcher is on PATH.'
+        }
         if ($LASTEXITCODE -ne 0) {
             throw 'Could not create the project virtual environment.'
         }

@@ -31,7 +31,7 @@ describe('formulários de conta', () => {
     await user.type(screen.getByLabelText('E-mail'), 'ANA@example.com')
     await user.type(screen.getByLabelText('Senha'), 'senha')
     await user.click(screen.getByRole('button', { name: 'Cadastrar' }))
-    expect(screen.getByText('Este e-mail já está cadastrado.')).toBeVisible()
+    expect(screen.getByRole('alert')).toHaveTextContent('Este e-mail já está cadastrado.')
   })
 
   it('exibe login inválido e trata erro do servidor', async () => {
@@ -43,7 +43,9 @@ describe('formulários de conta', () => {
     await user.type(screen.getByLabelText('E-mail'), 'ana@example.com')
     await user.type(screen.getByLabelText('Senha'), 'errada')
     await user.click(screen.getByRole('button', { name: 'Entrar' }))
-    expect(screen.getByText('E-mail ou senha inválidos. Cadastre-se primeiro.')).toBeVisible()
+    expect(screen.getByRole('alert')).toHaveTextContent(
+      'E-mail ou senha inválidos. Cadastre-se primeiro.',
+    )
     expect(onLoginSucesso).not.toHaveBeenCalled()
 
     await user.clear(screen.getByLabelText('Senha'))

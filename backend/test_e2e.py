@@ -50,8 +50,8 @@ def _register_and_login(page, email=None):
 
     page.goto(BASE_URL)
     page.get_by_role("button", name="Não tem conta? Cadastre-se").click()
-    page.get_by_label("Nome").fill("E2E")
-    page.get_by_label("Sobrenome").fill("Tester")
+    page.get_by_label("Nome", exact=True).fill("E2E")
+    page.get_by_label("Sobrenome", exact=True).fill("Tester")
     page.get_by_label("E-mail").fill(email)
     page.get_by_label("Senha").fill(password)
     page.get_by_role("button", name="Cadastrar").click()
@@ -76,8 +76,8 @@ def test_signup_login_logout_and_duplicate_account(page):
     )
 
     page.get_by_role("button", name="Não tem conta? Cadastre-se").click()
-    page.get_by_label("Nome").fill("E2E")
-    page.get_by_label("Sobrenome").fill("Tester")
+    page.get_by_label("Nome", exact=True).fill("E2E")
+    page.get_by_label("Sobrenome", exact=True).fill("Tester")
     page.get_by_label("E-mail").fill(email)
     page.get_by_label("Senha").fill("e2e-password")
     page.get_by_role("button", name="Cadastrar").click()
@@ -98,8 +98,8 @@ def test_signup_login_logout_and_duplicate_account(page):
     expect(page.get_by_role("button", name="Entrar")).to_be_visible()
 
     page.get_by_role("button", name="Não tem conta? Cadastre-se").click()
-    page.get_by_label("Nome").fill("E2E")
-    page.get_by_label("Sobrenome").fill("Tester")
+    page.get_by_label("Nome", exact=True).fill("E2E")
+    page.get_by_label("Sobrenome", exact=True).fill("Tester")
     page.get_by_label("E-mail").fill(email)
     page.get_by_label("Senha").fill("another-password")
     page.get_by_role("button", name="Cadastrar").click()

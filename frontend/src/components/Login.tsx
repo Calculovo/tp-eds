@@ -90,7 +90,7 @@ function Login({ onIrParaCadastro, onLoginSucesso }: LoginProps) {
           required
         />
 
-        {erro && <p className="mb-4 text-sm text-brand-tomato">{erro}</p>}
+        {erro && <p role="alert" className="mb-4 text-sm text-brand-tomato">{erro}</p>}
 
         {sucesso && <p className="mb-4 text-sm text-green-600">{sucesso}</p>}
 

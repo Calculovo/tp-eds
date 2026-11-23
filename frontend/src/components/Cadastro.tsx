@@ -90,7 +90,7 @@ function Cadastro({ onIrParaLogin }: CadastroProps) {
           required
         />
 
-        {erro && <p className="mb-4 text-sm text-brand-tomato">{erro}</p>}
+        {erro && <p role="alert" className="mb-4 text-sm text-brand-tomato">{erro}</p>}
 
         <button
           type="submit"

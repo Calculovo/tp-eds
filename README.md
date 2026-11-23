@@ -204,6 +204,8 @@ sequenceDiagram
 
 ### Backend
 
+Os testes unitários usam pytest e `unittest.mock` para verificar a lógica da API, do banco e da carga inicial sem depender do PostgreSQL. Os testes de integração usam `TestClient` do FastAPI e um PostgreSQL isolado no Docker Compose. A cobertura de linhas e branches é medida por `pytest-cov`.
+
 Na raiz do repositório, crie o ambiente virtual uma vez, se ainda não existir, e instale as dependências de teste:
 
 ```powershell
@@ -241,6 +243,8 @@ O banco de testes é separado do banco de desenvolvimento. Ao terminar os testes
 
 ### Frontend
 
+Os testes usam Vitest, React Testing Library e `user-event` em jsdom. Os unitários verificam componentes e utilitários isoladamente; os de integração exercitam o aplicativo completo com a API simulada.
+
 Na raiz do repositório:
 
 ```powershell
@@ -267,6 +271,8 @@ npm.cmd run test:coverage
 ```
 
 ### E2E
+
+Os testes E2E usam pytest com Playwright para controlar o Chromium e validar fluxos reais no site com frontend, API e PostgreSQL iniciados pelo Docker Compose.
 
 Na raiz do repositório, com o Docker Desktop instalado e em execução:
 

@@ -13,45 +13,6 @@ Os dados de exemplo de `backend/seed.py` são inseridos automaticamente na inici
 
 Para encerrar os serviços, pressione `Ctrl+C`. Para também remover os containers, execute `docker compose down`.
 
-## Testes do frontend
-
-Os testes de unidade usam Vitest e React Testing Library em jsdom. Os testes de integração renderizam o aplicativo e simulam as respostas da API, sem precisar iniciar o PostgreSQL ou o backend.
-
-```sh
-cd frontend
-npm install
-npm run test:unit
-npm run test:integration
-npm run test:coverage
-```
-
-`npm run test:coverage` executa as duas suítes e exige pelo menos 80% de cobertura em linhas, instruções, funções e branches. O relatório HTML é gerado em `frontend/coverage/`.
-
-## Testes E2E
-
-No Windows, com o Docker Desktop instalado e em execução, rode na raiz do repositório:
-
-```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\run-e2e.ps1
-```
-
-O script cria o ambiente virtual `.venv` se necessário, instala pytest/Playwright e o navegador Chromium quando faltarem, inicia o banco, a API e o frontend com Docker Compose, espera os serviços e executa os testes reais do navegador. Os serviços ficam ativos ao final; para encerrá-los, use `docker compose down`.
-
-Para executar manualmente, instale os pré-requisitos uma vez e inicie o site:
-
-```powershell
-python -m pip install -r backend\requirements-test.txt
-python -m playwright install chromium
-docker compose up --build
-```
-
-Em outro terminal, rode:
-
-```powershell
-$env:E2E_BASE_URL = "http://localhost:5173"
-python -m pytest -q backend\test_e2e.py
-```
-
 ## Membros
 - Camila de Almeida Ribeiro (backend)
 - Emerson Araújo Simões (full)
